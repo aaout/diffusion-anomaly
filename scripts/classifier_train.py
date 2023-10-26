@@ -114,14 +114,14 @@ def main():
     def forward_backward_log(data_loader, step, prefix="train"):
         if args.dataset=='brats':
             batch, extra, labels,_ , _ = next(data_loader)
-            print('IS BRATS')
+            # print('IS BRATS')
 
         elif  args.dataset=='chexpert':
             batch, extra = next(data_loader)
             labels = extra["y"].to(dist_util.dev())
-            print('IS CHEXPERT')
+            # print('IS CHEXPERT')
 
-        print('labels', labels)
+        # print('labels', labels.detach().numpy())
         batch = batch.to(dist_util.dev())
         labels= labels.to(dist_util.dev())
         if args.noised:
@@ -155,20 +155,18 @@ def main():
                      win=loss_window, name='loss_cls',
                      update='append')
 
-            else:
-
-                output_idx = logits[0].argmax()
-                print('outputidx', output_idx)
-                output_max = logits[0, output_idx]
-                print('outmax', output_max, output_max.shape)
-                output_max.backward()
-                saliency, _ = th.max(sub_batch.grad.data.abs(), dim=1)
-                print('saliency', saliency.shape)
-                viz.heatmap(visualize(saliency[0, ...]))
-                viz.image(visualize(sub_batch[0, 0,...]))
-                viz.image(visualize(sub_batch[0, 1, ...]))
-                th.cuda.empty_cache()
-
+            # else:
+            #     output_idx = logits[0].argmax()
+            #     print('outputidx', output_idx)
+            #     output_max = logits[0, output_idx]
+            #     print('outmax', output_max, output_max.shape)
+            #     output_max.backward()
+            #     saliency, _ = th.max(sub_batch.grad.data.abs(), dim=1)
+            #     print('saliency', saliency.shape)
+            #     viz.heatmap(visualize(saliency[0, ...]))
+            #     viz.image(visualize(sub_batch[0, 0,...]))
+            #     viz.image(visualize(sub_batch[0, 1, ...]))
+            #     th.cuda.empty_cache()
 
             if loss.requires_grad and prefix=="train":
                 if i == 0:
@@ -186,7 +184,7 @@ def main():
         )
         if args.anneal_lr:
             set_annealed_lr(opt, args.lr, (step + resume_step) / args.iterations)
-        print('step', step + resume_step)
+        print('step: ', step + resume_step)
         try:
             losses = forward_backward_log(data, step + resume_step)
         except:
@@ -196,6 +194,7 @@ def main():
         correct+=losses["train_acc@1"].sum()
         total+=args.batch_size
         acctrain=correct/total
+        print('acc train: ', acctrain)
 
         mp_trainer.optimize(opt)
 
