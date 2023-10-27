@@ -146,7 +146,7 @@ def main():
             losses[f"{prefix}_acc@2"] = compute_top_k(
                 logits, sub_labels, k=2, reduction="none"
             )
-            print('acc', losses[f"{prefix}_acc@1"])
+            # print('acc', losses[f"{prefix}_acc@1"])
             log_loss_dict(diffusion, sub_t, losses)
 
             loss = loss.mean()
