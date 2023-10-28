@@ -6,12 +6,14 @@ import argparse
 import os
 import sys
 from torch.autograd import Variable
+
 sys.path.append("..")
 sys.path.append(".")
 from guided_diffusion.bratsloader import BRATSDataset
 import blobfile as bf
 import torch as th
-os.environ['OMP_NUM_THREADS'] = '8'
+
+os.environ["OMP_NUM_THREADS"] = "8"
 
 import torch.distributed as dist
 import torch.nn.functional as F
@@ -19,10 +21,23 @@ from torch.nn.parallel.distributed import DistributedDataParallel as DDP
 from torch.optim import AdamW
 from visdom import Visdom
 import numpy as np
+
 viz = Visdom(port=8850)
-loss_window = viz.line( Y=th.zeros((1)).cpu(), X=th.zeros((1)).cpu(), opts=dict(xlabel='epoch', ylabel='Loss', title='classification loss'))
-val_window = viz.line( Y=th.zeros((1)).cpu(), X=th.zeros((1)).cpu(), opts=dict(xlabel='epoch', ylabel='Loss', title='validation loss'))
-acc_window= viz.line( Y=th.zeros((1)).cpu(), X=th.zeros((1)).cpu(), opts=dict(xlabel='epoch', ylabel='acc', title='accuracy'))
+loss_window = viz.line(
+    Y=th.zeros((1)).cpu(),
+    X=th.zeros((1)).cpu(),
+    opts=dict(xlabel="epoch", ylabel="Loss", title="classification loss"),
+)
+val_window = viz.line(
+    Y=th.zeros((1)).cpu(),
+    X=th.zeros((1)).cpu(),
+    opts=dict(xlabel="epoch", ylabel="Loss", title="validation loss"),
+)
+acc_window = viz.line(
+    Y=th.zeros((1)).cpu(),
+    X=th.zeros((1)).cpu(),
+    opts=dict(xlabel="epoch", ylabel="acc", title="accuracy"),
+)
 
 from guided_diffusion import dist_util, logger
 from guided_diffusion.fp16_util import MixedPrecisionTrainer
@@ -36,7 +51,6 @@ from guided_diffusion.script_util import (
     create_classifier_and_diffusion,
 )
 from guided_diffusion.train_util import parse_resume_step_from_filename, log_loss_dict
-
 
 
 def main():
@@ -75,29 +89,23 @@ def main():
         model=model, use_fp16=args.classifier_use_fp16, initial_lg_loss_scale=16.0
     )
 
-
     logger.log("creating data loader...")
 
-    if args.dataset == 'brats':
+    if args.dataset == "brats":
         ds = BRATSDataset(args.data_dir, test_flag=False)
-        datal = th.utils.data.DataLoader(
-            ds,
-            batch_size=args.batch_size,
-            shuffle=True)
+        datal = th.utils.data.DataLoader(ds, batch_size=args.batch_size, shuffle=True)
         data = iter(datal)
 
-    elif args.dataset == 'chexpert':
+    elif args.dataset == "chexpert":
         data = load_data(
             data_dir=args.data_dir,
             batch_size=1,
             image_size=args.image_size,
             class_cond=True,
         )
-        print('dataset is chexpert')
+        print("dataset is chexpert")
 
-
-
-    logger.log(f"creating optimizer...")
+    logger.log("creating optimizer...")
     opt = AdamW(mp_trainer.master_params, lr=args.lr, weight_decay=args.weight_decay)
     if args.resume_checkpoint:
         opt_checkpoint = bf.join(
@@ -110,20 +118,19 @@ def main():
 
     logger.log("training classifier model...")
 
-
     def forward_backward_log(data_loader, step, prefix="train"):
-        if args.dataset=='brats':
-            batch, extra, labels,_ , _ = next(data_loader)
+        if args.dataset == "brats":
+            batch, extra, labels, _, _ = next(data_loader)
             # print('IS BRATS')
 
-        elif  args.dataset=='chexpert':
+        elif args.dataset == "chexpert":
             batch, extra = next(data_loader)
             labels = extra["y"].to(dist_util.dev())
             # print('IS CHEXPERT')
 
         # print('labels', labels.detach().numpy())
         batch = batch.to(dist_util.dev())
-        labels= labels.to(dist_util.dev())
+        labels = labels.to(dist_util.dev())
         if args.noised:
             t, _ = schedule_sampler.sample(batch.shape[0], dist_util.dev())
             batch = diffusion.q_sample(batch, t)
@@ -133,7 +140,6 @@ def main():
         for i, (sub_batch, sub_labels, sub_t) in enumerate(
             split_microbatches(args.microbatch, batch, labels, t)
         ):
-
             sub_batch = Variable(sub_batch, requires_grad=True)
             logits = model(sub_batch, timesteps=sub_t)
 
@@ -150,10 +156,14 @@ def main():
             log_loss_dict(diffusion, sub_t, losses)
 
             loss = loss.mean()
-            if prefix=="train":
-                viz.line(X=th.ones((1, 1)).cpu() * step, Y=th.Tensor([loss]).unsqueeze(0).cpu(),
-                     win=loss_window, name='loss_cls',
-                     update='append')
+            if prefix == "train":
+                viz.line(
+                    X=th.ones((1, 1)).cpu() * step,
+                    Y=th.Tensor([loss]).unsqueeze(0).cpu(),
+                    win=loss_window,
+                    name="loss_cls",
+                    update="append",
+                )
 
             # else:
             #     output_idx = logits[0].argmax()
@@ -168,14 +178,15 @@ def main():
             #     viz.image(visualize(sub_batch[0, 1, ...]))
             #     th.cuda.empty_cache()
 
-            if loss.requires_grad and prefix=="train":
+            if loss.requires_grad and prefix == "train":
                 if i == 0:
                     mp_trainer.zero_grad()
                 mp_trainer.backward(loss * len(sub_batch) / len(batch))
 
         return losses
 
-    correct=0; total=0
+    correct = 0
+    total = 0
     for step in range(args.iterations - resume_step):
         logger.logkv("step", step + resume_step)
         logger.logkv(
@@ -184,17 +195,17 @@ def main():
         )
         if args.anneal_lr:
             set_annealed_lr(opt, args.lr, (step + resume_step) / args.iterations)
-        print('step: ', step + resume_step)
+        print("step: ", step + resume_step)
         try:
             losses = forward_backward_log(data, step + resume_step)
         except:
             data = iter(datal)
             losses = forward_backward_log(data, step + resume_step)
 
-        correct+=losses["train_acc@1"].sum()
-        total+=args.batch_size
-        acctrain=correct/total
-        print('acc train: ', acctrain)
+        correct += losses["train_acc@1"].sum()
+        total += args.batch_size
+        acctrain = correct / total
+        print("acc train: ", acctrain)
 
         mp_trainer.optimize(opt)
 
@@ -226,7 +237,11 @@ def save_model(mp_trainer, opt, step):
             mp_trainer.master_params_to_state_dict(mp_trainer.master_params),
             os.path.join(logger.get_dir(), f"modelbratsclass{step:06d}.pt"),
         )
-        th.save(opt.state_dict(), os.path.join(logger.get_dir(), f"optbratsclass{step:06d}.pt"))
+        th.save(
+            opt.state_dict(),
+            os.path.join(logger.get_dir(), f"optbratsclass{step:06d}.pt"),
+        )
+
 
 def compute_top_k(logits, labels, k, reduction="mean"):
     _, top_ks = th.topk(logits, k, dim=-1)
@@ -261,7 +276,7 @@ def create_argparser():
         log_interval=1,
         eval_interval=1000,
         save_interval=2000,
-        dataset='brats'
+        dataset="brats",
     )
     defaults.update(classifier_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

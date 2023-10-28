@@ -42,7 +42,6 @@ if __name__ == "__main__":
     # 下位1%の数値を取得
     bottom_1_percent_values = sorted_lists[bottom_1_percent_index]
 
-
     # 結果を表示
     print(f"上位1%の数値とインデックス: {top_1_percent_values}")
 

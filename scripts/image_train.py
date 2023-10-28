@@ -4,6 +4,7 @@ Train a diffusion model on images.
 import sys
 import argparse
 import torch as th
+
 sys.path.append("..")
 sys.path.append(".")
 from guided_diffusion.bratsloader import BRATSDataset
@@ -18,7 +19,9 @@ from guided_diffusion.script_util import (
 )
 from guided_diffusion.train_util import TrainLoop
 from visdom import Visdom
+
 viz = Visdom(port=8850)
+
 
 def main():
     args = create_argparser().parse_args()
@@ -31,26 +34,25 @@ def main():
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
     model.to(dist_util.dev())
-    schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion,  maxt=1000)
+    schedule_sampler = create_named_schedule_sampler(
+        args.schedule_sampler, diffusion, maxt=1000
+    )
 
     logger.log("creating data loader...")
 
-    if args.dataset == 'brats':
+    if args.dataset == "brats":
         ds = BRATSDataset(args.data_dir, test_flag=False)
-        datal = th.utils.data.DataLoader(
-            ds,
-            batch_size=args.batch_size,
-            shuffle=True)
-       # data = iter(datal)
+        datal = th.utils.data.DataLoader(ds, batch_size=args.batch_size, shuffle=True)
+    # data = iter(datal)
 
-    elif args.dataset == 'chexpert':
+    elif args.dataset == "chexpert":
         datal = load_data(
             data_dir=args.data_dir,
             batch_size=1,
             image_size=args.image_size,
             class_cond=True,
         )
-        print('dataset is chexpert')
+        print("dataset is chexpert")
 
     logger.log("training...")
     TrainLoop(
@@ -69,7 +71,7 @@ def main():
         schedule_sampler=schedule_sampler,
         weight_decay=args.weight_decay,
         lr_anneal_steps=args.lr_anneal_steps,
-        dataset=args.dataset
+        dataset=args.dataset,
     ).run_loop()
 
 
@@ -85,10 +87,10 @@ def create_argparser():
         ema_rate="0.9999",  # comma-separated list of EMA values
         log_interval=100,
         save_interval=10000,
-        resume_checkpoint='',
+        resume_checkpoint="",
         use_fp16=False,
         fp16_scale_growth=1e-3,
-        dataset='brats',
+        dataset="brats",
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

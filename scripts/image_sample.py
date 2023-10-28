@@ -7,6 +7,7 @@ import argparse
 import os
 
 import sys
+
 sys.path.append("..")
 sys.path.append(".")
 import numpy as np
@@ -50,23 +51,23 @@ def main():
             classes = th.randint(
                 low=1, high=2, size=(args.batch_size,), device=dist_util.dev()
             )
-            print('classes', classes)
+            print("classes", classes)
             model_kwargs["y"] = classes
         sample_fn = (
             diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop
         )
         sample = sample_fn(
             model,
-            (args.batch_size, 4 , args.image_size, args.image_size),
+            (args.batch_size, 4, args.image_size, args.image_size),
             clip_denoised=args.clip_denoised,
             model_kwargs=model_kwargs,
         )
         sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
         sample = sample.permute(0, 2, 3, 1)
         sample = sample.contiguous()
-        print('sample', sample.shape)
-        s=th.tensor(sample)
-        th.save(s, './tensor.pt')
+        print("sample", sample.shape)
+        s = th.tensor(sample)
+        th.save(s, "./tensor.pt")
 
         gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
         dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL

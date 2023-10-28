@@ -34,7 +34,7 @@ print("min: ", np.min(original_nib_img_tensor))
 # print("max: ", np.max(rotated_image_data))
 # print("min: ", np.min(rotated_image_data))
 
-plt.imshow(original_nib_img_tensor, cmap='gray')
+plt.imshow(original_nib_img_tensor, cmap="gray")
 plt.show()
 plt.savefig("original_nib_img_seg.png")
 sys.exit()
@@ -56,8 +56,11 @@ for y in range(nib_slice.shape[0]):
 # plt.show()
 # plt.savefig("scatter.png")
 
-scatter_data_to_excel = {'original': pixel_values_original, 'created': pixel_values_created}
+scatter_data_to_excel = {
+    "original": pixel_values_original,
+    "created": pixel_values_created,
+}
 df = pd.DataFrame(scatter_data_to_excel)
-excel_filename = f'BraTS20_Training_001_{CHANNEL}_{SLICE}.xlsx'
+excel_filename = f"BraTS20_Training_001_{CHANNEL}_{SLICE}.xlsx"
 # excel_filename = f'BraTS20_Training_006_{CHANNEL}_81w.xlsx'
-df.to_excel(excel_filename, index=False, engine='openpyxl')
+df.to_excel(excel_filename, index=False, engine="openpyxl")

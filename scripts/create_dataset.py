@@ -52,7 +52,9 @@ def norm_seg_func(seg_slice_data):
     if max_value == 0:
         normalized_seg_slice_data = seg_slice_data
     else:
-        normalized_seg_slice_data = (seg_slice_data - min_value) / (max_value - min_value)
+        normalized_seg_slice_data = (seg_slice_data - min_value) / (
+            max_value - min_value
+        )
     return normalized_seg_slice_data
 
 
@@ -100,7 +102,9 @@ if __name__ == "__main__":
                                     f"/media/user/ボリューム2/brats_imgs/test_labels/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/",
                                     exist_ok=True,
                                 )
-                                nib_slice = nibabel.Nifti1Image(rotated_image_data, affine=np.eye(4))
+                                nib_slice = nibabel.Nifti1Image(
+                                    rotated_image_data, affine=np.eye(4)
+                                )
                                 nibabel.save(
                                     nib_slice,
                                     f"/media/user/ボリューム2/brats_imgs/test_labels/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}.nii.gz",
@@ -110,7 +114,9 @@ if __name__ == "__main__":
                                     f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/",
                                     exist_ok=True,
                                 )
-                                nib_slice = nibabel.Nifti1Image(rotated_image_data, affine=np.eye(4))
+                                nib_slice = nibabel.Nifti1Image(
+                                    rotated_image_data, affine=np.eye(4)
+                                )
                                 nibabel.save(
                                     nib_slice,
                                     f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}.nii.gz",
@@ -138,7 +144,9 @@ if __name__ == "__main__":
                                     f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/",
                                     exist_ok=True,
                                 )
-                                nib_slice = nibabel.Nifti1Image(rotated_image_data, affine=np.eye(4))
+                                nib_slice = nibabel.Nifti1Image(
+                                    rotated_image_data, affine=np.eye(4)
+                                )
                                 nibabel.save(
                                     nib_slice,
                                     f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}_w.nii.gz",
