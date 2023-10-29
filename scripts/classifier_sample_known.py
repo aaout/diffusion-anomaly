@@ -56,15 +56,6 @@ def main():
         ds = BRATSDataset(args.data_dir, test_flag=True)
         datal = th.utils.data.DataLoader(ds, batch_size=args.batch_size, shuffle=False)
 
-    elif args.dataset == "chexpert":
-        data = load_data(
-            data_dir=args.data_dir,
-            batch_size=args.batch_size,
-            image_size=args.image_size,
-            class_cond=True,
-        )
-        datal = iter(data)
-
     model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location=dist_util.dev())
         # dist_util.load_state_dict(args.model_path, map_location="cpu")
@@ -183,15 +174,6 @@ def main():
             )
             difftot = abs(org[0, :4, ...] - sample[0, ...]).sum(dim=0)
             viz.heatmap(visualize(difftot), opts=dict(caption="difftot"))
-
-        elif args.dataset == "chexpert":
-            viz.image(
-                visualize(sample[0, ...]),
-                opts=dict(caption="sampled output" + str(name)),
-            )
-            diff = abs(visualize(org[0, 0, ...]) - visualize(sample[0, 0, ...]))
-            diff = np.array(diff.cpu())
-            viz.heatmap(np.flipud(diff), opts=dict(caption="diff"))
 
         gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
         dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
