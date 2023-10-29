@@ -77,9 +77,6 @@ if __name__ == "__main__":
             # print(number)
             if not dirs:
                 # 各被験者の各チャネル[seg, flair, t1, t1ce, t2]をfilesとして読み込む
-                if not root.endswith("BraTS20_Training_333"):
-                    continue
-                # sys.exit()
                 files = sorted(files)
                 for f in files:
                     # seg.niiはnorm_funcを適用せず正規化
@@ -149,5 +146,5 @@ if __name__ == "__main__":
                                 )
                                 nibabel.save(
                                     nib_slice,
-                                    f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}_w.nii.gz",
+                                    f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}.nii.gz",
                                 )
