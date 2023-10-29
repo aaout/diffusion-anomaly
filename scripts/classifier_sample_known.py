@@ -17,6 +17,7 @@ import torch.nn.functional as F
 import numpy as np
 import torch as th
 import torch.distributed as dist
+import torchvision.utils as vutils
 from guided_diffusion.image_datasets import load_data
 from guided_diffusion import dist_util, logger
 from guided_diffusion.script_util import (
@@ -28,6 +29,10 @@ from guided_diffusion.script_util import (
     add_dict_to_argparser,
     args_to_dict,
 )
+
+# 0: 異常データのみ入力
+# 1: 正常データのみ入力
+SAMPLE_MODE = 0
 
 
 def visualize(img):
@@ -61,7 +66,8 @@ def main():
         datal = iter(data)
 
     model.load_state_dict(
-        dist_util.load_state_dict(args.model_path, map_location="cpu")
+        dist_util.load_state_dict(args.model_path, map_location=dist_util.dev())
+        # dist_util.load_state_dict(args.model_path, map_location="cpu")
     )
     model.to(dist_util.dev())
     if args.use_fp16:
@@ -103,11 +109,20 @@ def main():
     for img in datal:
         model_kwargs = {}
         #   img = next(data)  # should return an image from the dataloader "data"
-        print("img", img[0].shape, img[1])
+        # img[0]: input test data [1, 4, 256, 256]
+        # img[1]: label dict {'y': tensor([1])} 1->diseased, 0->healthy
+        # img[2]: weak label 1->diseased, 0->healthy
+        # img[3]: label img data [1, 1, 240, 240]
+        # img[4]: file name tuple: ('BraTS20_Training_349_t1_099.nii.gz',)
+        print(img[4][0])
+        print("weakly label: ", img[1])
+        # sys.exit()
         if args.dataset == "brats":
             Labelmask = th.where(img[3] > 0, 1, 0)
             number = img[4][0]
-            if img[2] == 0:
+
+            # 正常(0) or 異常データ(1)のみに対してサンプリング
+            if img[2] == SAMPLE_MODE:
                 continue  # take only diseased images as input
 
             viz.image(visualize(img[0][0, 0, ...]), opts=dict(caption="img input 0"))
