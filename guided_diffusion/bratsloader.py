@@ -44,18 +44,32 @@ class BRATSDataset(torch.utils.data.Dataset):
                 self.database.append(datapoint)
 
     def __getitem__(self, x):
+        """1つのindexに対し, 入力画像, ラベル画像, 弱ラベル(normal or abnormal), ファイル名を返す
+
+        Args:
+            x: index
+
+        Returns:
+            image: input test data [1, 4, 256, 256]
+            out_dict: label dict {'y': tensor([1])} 1->diseased, 0->healthy
+            weak_label: weak label 1->diseased, 0->healthy
+            label: label img data [1, 1, 240, 240]
+            number: file name tuple: ('BraTS20_Training_349_t1_099.nii.gz',)
+        """
+
         out = []
         filedict = self.database[x]
         for seqtype in self.seqtypes:
-            number = filedict["t1"].split("/")[4]
+            number = filedict["t1"].split("/")[-1]
             nib_img = nibabel.load(filedict[seqtype])
             out.append(torch.tensor(nib_img.get_fdata()))
         out = torch.stack(out)
         out_dict = {}
         if self.test_flag:
-            path2 = "./data/brats/test_labels/" + str(number) + "-label.nii.gz"
-
-            seg = nibabel.load(path2)
+            input_test_data_path = filedict["t1"]
+            seg_test_data_path = input_test_data_path.replace("t1", "seg")
+            seg_test_data_path = seg_test_data_path.replace("test", "test_labels")
+            seg = nibabel.load(seg_test_data_path)
             seg = seg.get_fdata()
             image = torch.zeros(4, 256, 256)
             image[:, 8:-8, 8:-8] = out
