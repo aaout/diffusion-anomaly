@@ -234,7 +234,7 @@ class GaussianDiffusion:
             q(x_{t-1} | x_t, x_0)
 
         """
-       
+
         assert x_start.shape == x_t.shape
         posterior_mean = (
             _extract_into_tensor(self.posterior_mean_coef1, t, x_t.shape) * x_start
@@ -278,10 +278,10 @@ class GaussianDiffusion:
             model_kwargs = {}
 
         B, C = x.shape[:2]
-        
+
         assert t.shape == (B,)
         model_output = model(x, self._scale_timesteps(t), **model_kwargs)
-        
+
         if self.model_var_type in [ModelVarType.LEARNED, ModelVarType.LEARNED_RANGE]:
             assert model_output.shape == (B, C * 2, *x.shape[2:])
             model_output, model_var_values = th.split(model_output, C, dim=1)
@@ -347,7 +347,7 @@ class GaussianDiffusion:
             "log_variance": model_log_variance,
             "pred_xstart": pred_xstart,
         }
-  
+
     def _predict_xstart_from_eps(self, x_t, t, eps):
         x_t = x_t[:, :4, ...]
         assert x_t.shape == eps.shape
@@ -564,8 +564,8 @@ class GaussianDiffusion:
         noise = th.randn_like(img[:, :4, ...]).to(device)
         x_noisy = self.q_sample(x_start=img[:, :4, ...], t=t, noise=noise).to(device)
         x_noisy = torch.cat((x_noisy, img[:, 4:, ...]), dim=1)
-        
-        
+
+
         for sample in self.p_sample_loop_progressive(
             model,
             shape,
@@ -581,7 +581,7 @@ class GaussianDiffusion:
             classifier=classifier
         ):
             final = sample
-      
+
         return final["sample"], x_noisy, img
 
     def p_sample_loop_interpolation(
@@ -657,22 +657,22 @@ class GaussianDiffusion:
             img = noise
         else:
             img = th.randn(*shape, device=device)
-      
+
         indices = list(range(time))[::-1]
-        print('indices', indices)
+        # print('indices', indices)
         if progress:
             # Lazy import so that we don't depend on tqdm.
             from tqdm.auto import tqdm
 
             indices = tqdm(indices)
-        
-          
+
+
         for i in indices:
                 t = th.tensor([i] * shape[0], device=device)
 
                 with th.no_grad():
-                    
-                   
+
+
                     out = self.p_sample(
                         model,
                         img,
@@ -692,7 +692,7 @@ class GaussianDiffusion:
                      viz.image(visualize(img[0, 2,...]), opts=dict(caption=str(i)))
                      viz.image(visualize(img[0, 3,...]), opts=dict(caption=str(i)))
                      viz.image(visualize(out["saliency"][0,0,...]), opts=dict(caption='saliency'))
-              
+
 
     def ddim_sample(
             self,
@@ -897,7 +897,7 @@ class GaussianDiffusion:
         t = th.randint(0,1, (b,), device=device).long().to(device)
         org = img[0].to(device)
         img = img[0].to(device)
-        
+
         indices = list(range(t))[::-1]
         noise = th.randn_like(img).to(device)
         x_noisy = self.q_sample(x_start=img, t=t, noise=noise).to(device)
@@ -955,7 +955,7 @@ class GaussianDiffusion:
         else:
             img = th.randn(*shape, device=device)
         indices = list(range(time-1))[::-1]
-        print('indices', indices)
+        # print('indices', indices)
 
         if progress:
             # Lazy import so that we don't depend on tqdm.
@@ -966,8 +966,8 @@ class GaussianDiffusion:
         for i in indices:
 
             k=abs(time-1-i)
-            if k%20==0:
-                print('k',k)
+            # if k%20==0:
+            #     print('k',k)
 
             t = th.tensor([k] * shape[0], device=device)
             with th.no_grad():
@@ -1115,7 +1115,7 @@ class GaussianDiffusion:
         return (terms, model_output)
 
 
-  
+
 
 
     def _prior_bpd(self, x_start):
