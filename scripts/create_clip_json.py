@@ -13,6 +13,8 @@ from PIL import Image
 
 def create_clip_json(voxel_data):
     """各被験者の各チャネルのボクセルデータに対し、clip点(上位1%と下位1%)の値を返す関数
+    jsonファイルは/data/clip_train.json, /data/clip_test.jsonに保存
+    作成したjsonファイルはscripts/create_dataset.pyで使用
 
     Args:
         voxel_data (numpy.ndarray [240, 240, 155]): 各被験者の各チャネルのボクセルデータ
