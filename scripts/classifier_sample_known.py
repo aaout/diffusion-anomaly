@@ -33,6 +33,8 @@ from guided_diffusion.script_util import (
 # 0: 異常データのみ入力
 # 1: 正常データのみ入力
 SAMPLE_MODE = 0
+# FOLDER_NAME = "abnormal"
+FOLDER_NAME = "abnormal_sample_and_heatmap"
 
 
 def visualize(img):
@@ -41,6 +43,9 @@ def visualize(img):
     normalized_img = (img - _min) / (_max - _min)
     return normalized_img
 
+
+# DMからの出力は上位1%を1, 下位1%を0, その他を線形に正規化
+# TODO: スライスに対応するボクセルデータを取り出し、上位下位の値を取得
 
 def main():
     args = create_argparser().parse_args()
@@ -99,15 +104,24 @@ def main():
 
     for img in datal:
         model_kwargs = {}
-        #   img = next(data)  # should return an image from the dataloader "data"
+        # TODO: 変数名のリファクタリング
+        # img = next(data)  # should return an image from the dataloader "data"
         # img[0]: input test data [1, 4, 256, 256]
         # img[1]: label dict {'y': tensor([1])} 1->diseased, 0->healthy
         # img[2]: weak label 1->diseased, 0->healthy
         # img[3]: label img data [1, 1, 240, 240]
         # img[4]: file name tuple: ('BraTS20_Training_349_t1_099.nii.gz',)
+        print("")
         print(img[4][0])
         print("weakly label: ", img[1])
-        # sys.exit()
+
+        # 特定の被験者からサンプリングを開始する場合
+        # file_name = img[4][0]
+        # subject_num = file_name.split("_")[2]
+        # if subject_num in [f"{i:03}" for i in range(334, 355)]:
+        #     print(f"skip {subject_num}")
+        #     continue
+
         if args.dataset == "brats":
             Labelmask = th.where(img[3] > 0, 1, 0)
             number = img[4][0]
@@ -121,11 +135,6 @@ def main():
             viz.image(visualize(img[0][0, 2, ...]), opts=dict(caption="img input 2"))
             viz.image(visualize(img[0][0, 3, ...]), opts=dict(caption="img input 3"))
             viz.image(visualize(img[3][0, ...]), opts=dict(caption="ground truth"))
-        else:
-            viz.image(visualize(img[0][0, ...]), opts=dict(caption="img input"))
-            print("img1", img[1])
-            number = img[1]["path"]
-            print("number", number)
 
         if args.class_cond:
             classes = th.randint(
@@ -138,7 +147,6 @@ def main():
             if not args.use_ddim
             else diffusion.ddim_sample_loop_known
         )
-        print("samplefn", sample_fn)
         start = th.cuda.Event(enable_timing=True)
         end = th.cuda.Event(enable_timing=True)
         start.record()
@@ -174,6 +182,65 @@ def main():
             )
             difftot = abs(org[0, :4, ...] - sample[0, ...]).sum(dim=0)
             viz.heatmap(visualize(difftot), opts=dict(caption="difftot"))
+
+            file_name = img[4][0]
+            subject_num = file_name.split("_")[2]
+            slice_num = file_name.split(".")[0].split("_")[-1]
+            os.makedirs(f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}", exist_ok=True)
+            vutils.save_image(img[0][0][0], f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_input_flair.jpg')
+            vutils.save_image(img[0][0][1], f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_input_t1.jpg')
+            vutils.save_image(img[0][0][2], f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_input_t1ce.jpg')
+            vutils.save_image(img[0][0][3], f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_input_t2.jpg')
+            vutils.save_image(img[3], f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_label.jpg')
+
+            # save output img
+            min_val = sample[0, 0, ...].min()
+            max_val = sample[0, 0, ...].max()
+            sample[0, 0, ...] = (sample[0, 0, ...] - min_val) / (max_val - min_val + 1e-8)
+
+            min_val = sample[0, 1, ...].min()
+            max_val = sample[0, 1, ...].max()
+            sample[0, 1, ...] = (sample[0, 1, ...] - min_val) / (max_val - min_val + 1e-8)
+
+            min_val = sample[0, 2, ...].min()
+            max_val = sample[0, 2, ...].max()
+            sample[0, 2, ...] = (sample[0, 2, ...] - min_val) / (max_val - min_val + 1e-8)
+
+            min_val = sample[0, 3, ...].min()
+            max_val = sample[0, 3, ...].max()
+            sample[0, 3, ...] = (sample[0, 3, ...] - min_val) / (max_val - min_val + 1e-8)
+
+            vutils.save_image(sample[0, 0, ...], f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_sample_flair.jpg')
+            vutils.save_image(sample[0, 1, ...], f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_sample_t1.jpg')
+            vutils.save_image(sample[0, 2, ...], f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_sample_t1ce.jpg')
+            vutils.save_image(sample[0, 3, ...], f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_sample_t2.jpg')
+
+            # save heatmap img
+            diffmap = org[0, :4, ...] - sample[0, ...]
+            diffmap = th.flip(diffmap, dims=[0])
+            im_0 = plt.imshow(diffmap[0, ...].cpu(), cmap='bwr', interpolation='nearest')
+            # im_0 = plt.imshow(diffmap[0, ...].cpu(), cmap='bwr', interpolation='nearest', vmax=1, vmin=-1)
+            plt.colorbar(im_0)
+            plt.savefig(f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_heatmap_flair.jpg', bbox_inches='tight', pad_inches=0)
+            plt.close()
+
+            # vutils.save_image(diffmap[1, ...].cpu(), f'/mnt/ito/diffusion-anomaly/out/generated_img_all/{subject_num}/{slice_num}_diffmap_t1.png')
+            im_1 = plt.imshow(diffmap[1, ...].cpu(), cmap='bwr', interpolation='nearest')
+            plt.colorbar(im_1)
+            plt.savefig(f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_heatmap_t1.jpg', bbox_inches='tight', pad_inches=0)
+            plt.close()
+
+            # vutils.save_image(diffmap[2, ...].cpu(), f'/mnt/ito/diffusion-anomaly/out/generated_img_all/{subject_num}/{slice_num}_diffmap_t1ce.png')
+            im_2 = plt.imshow(diffmap[2, ...].cpu(), cmap='bwr', interpolation='nearest')
+            plt.colorbar(im_2)
+            plt.savefig(f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_heatmap_t1ce.jpg', bbox_inches='tight', pad_inches=0)
+            plt.close()
+
+            # vutils.save_image(diffmap[3, ...].cpu(), f'/mnt/ito/diffusion-anomaly/out/generated_img_all/{subject_num}/{slice_num}_diffmap_t2.png')
+            im_3 = plt.imshow(diffmap[3, ...].cpu(), cmap='bwr', interpolation='nearest')
+            plt.colorbar(im_3)
+            plt.savefig(f'/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_num}/{slice_num}_heatmap_t2.jpg', bbox_inches='tight', pad_inches=0)
+            plt.close()
 
         gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
         dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
