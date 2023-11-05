@@ -1,3 +1,6 @@
+# 拡散モデルの学習を行うスクリプト
+# 詳細はscripts/image_train.pyを参照
+
 MODEL_FLAGS="--image_size 256 --num_channels 128 --class_cond True --num_res_blocks 2 --num_heads 1 --learn_sigma True --use_scale_shift_norm False --attention_resolutions 16"
 DIFFUSION_FLAGS="--diffusion_steps 1000 --noise_schedule linear --rescale_learned_sigmas False --rescale_timesteps False --lr_anneal_steps 80000 --log_interval 100 --save_interval 2500"
 TRAIN_FLAGS="--lr 1e-4 --batch_size 8"
