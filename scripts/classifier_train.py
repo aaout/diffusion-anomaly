@@ -22,6 +22,7 @@ from torch.optim import AdamW
 from visdom import Visdom
 import numpy as np
 
+# "visdom -port 8850" to start visdom server
 viz = Visdom(port=8850)
 loss_window = viz.line(
     Y=th.zeros((1)).cpu(),
