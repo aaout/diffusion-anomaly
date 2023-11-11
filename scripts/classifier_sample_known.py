@@ -5,11 +5,8 @@ numpy array. This can be used to produce samples for FID evaluation.
 import matplotlib.pyplot as plt
 import argparse
 import os
-import json
-from visdom import Visdom
-
-viz = Visdom(port=8850)
 import sys
+import json
 
 sys.path.append("..")
 sys.path.append(".")
@@ -33,18 +30,11 @@ from guided_diffusion.script_util import (
 
 # 0: 異常データのみ入力
 # 1: 正常データのみ入力
-SAMPLE_MODE = 0
+SAMPLE_MODE = 1
 # FOLDER_NAME = "abnormal"
-FOLDER_NAME = "abnormal_sample_and_heatmap"
+FOLDER_NAME = "sample_data_and_heatmap"
 # with open("/mnt/ito/diffusion-anomaly/data/clip_test.json", "r") as f:
 #     clip_point_dict = json.load(f)
-
-
-def visualize(img):
-    _min = img.min()
-    _max = img.max()
-    normalized_img = (img - _min) / (_max - _min)
-    return normalized_img
 
 
 def refer_clip_point(file_name):
@@ -59,12 +49,12 @@ def refer_clip_point(file_name):
         lower_clip (float): 下位1%の値
     """
 
-    with open("/mnt/ito/diffusion-anomaly/data/clip_test.json", "r") as f:
-        clip_point_dict = json.load(f)
-    upper_clip = clip_point_dict[file_name]["upper_clip"]
-    lower_clip = clip_point_dict[file_name]["lower_clip"]
+    # with open("/mnt/ito/diffusion-anomaly/data/clip_test.json", "r") as f:
+    #     clip_point_dict = json.load(f)
+    # upper_clip = clip_point_dict[file_name]["upper_clip"]
+    # lower_clip = clip_point_dict[file_name]["lower_clip"]
 
-    return upper_clip, lower_clip
+    # return upper_clip, lower_clip
 
 
 def norm_func(slice_data):
@@ -187,12 +177,6 @@ def main():
             if normal_or_abnormal == SAMPLE_MODE:
                 continue  # take only diseased images as input
 
-            viz.image(visualize(input_img_t1), opts=dict(caption="input t1"))
-            viz.image(visualize(input_img_t1ce), opts=dict(caption="input t1ce"))
-            viz.image(visualize(input_img_t2), opts=dict(caption="input t2"))
-            viz.image(visualize(input_img_flair), opts=dict(caption="input flair"))
-            viz.image(visualize(label_img), opts=dict(caption="label"))
-
         if args.class_cond:
             classes = th.randint(
                 low=0, high=1, size=(args.batch_size,), device=dist_util.dev()
@@ -238,11 +222,6 @@ def main():
         # normed_sample_img_flair = norm_func(sample_img_flair)
 
         if args.dataset == "brats":
-            viz.image(visualize(sample_img_t1), opts=dict(caption="sampled t1"))
-            viz.image(visualize(sample_img_t1ce), opts=dict(caption="sampled t1ce"))
-            viz.image(visualize(sample_img_t2), opts=dict(caption="sampled t2"))
-            viz.image(visualize(sample_img_flair), opts=dict(caption="sampled flair"))
-
             # 入力データをjpgとして保存
             os.makedirs(
                 f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}",
@@ -287,15 +266,16 @@ def main():
                 f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_sample_flair.jpg",
             )
 
+            # TODO: フォルダパス修正(.ptも.jpgも同じフォルダにまとめる)
             # 差分データをptとして保存
             diff_t1 = input_img_t1 - sample_img_t1.cpu()
             os.makedirs(
-                f"/media/user/ボリューム2/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}",
+                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}",
                 exist_ok=True,
             )
             th.save(
                 diff_t1,
-                f"/media/user/ボリューム2/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_t1.pt",
+                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_t1.pt",
             )
             # 入力データ(input_img)とsampleしたデータ(sample_img)の差分をヒートマップとして保存
             heatmap_t1 = plt.imshow(
@@ -312,7 +292,7 @@ def main():
             diff_t1ce = input_img_t1ce - sample_img_t1ce.cpu()
             th.save(
                 diff_t1ce,
-                f"/media/user/ボリューム2/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_t1ce.pt",
+                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_t1ce.pt",
             )
             heatmap_t1ce = plt.imshow(
                 diff_t1ce, cmap="bwr", interpolation="nearest", vmax=1, vmin=-1
@@ -328,7 +308,7 @@ def main():
             diff_t2 = input_img_t2 - sample_img_t2.cpu()
             th.save(
                 diff_t2,
-                f"/media/user/ボリューム2/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_t2.pt",
+                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_t2.pt",
             )
             heatmap_t2 = plt.imshow(
                 diff_t2, cmap="bwr", interpolation="nearest", vmax=1, vmin=-1
@@ -344,7 +324,7 @@ def main():
             diff_flair = input_img_flair - sample_img_flair.cpu()
             th.save(
                 diff_flair,
-                f"/media/user/ボリューム2/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_flair.pt",
+                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_flair.pt",
             )
             heatmap_flair = plt.imshow(
                 diff_flair.cpu(), cmap="bwr", interpolation="nearest", vmax=1, vmin=-1
@@ -360,7 +340,7 @@ def main():
             diff_all = abs(org[0, :4, ...] - sample[0, ...]).sum(dim=0)
             th.save(
                 diff_all,
-                f"/media/user/ボリューム2/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_all.pt",
+                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_all.pt",
             )
             heatmap_all = plt.imshow(
                 diff_all.cpu(), cmap="jet", interpolation="nearest"
