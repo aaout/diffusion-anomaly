@@ -18,20 +18,30 @@ if __name__ == "__main__":
     # CHANNEL = "t2"
     # voxel_path = f"/mnt/ito/diffusion-anomaly/data/archive/BraTS2020_TrainingData/BraTS20_Training_{NUMBER}/BraTS20_Training_{NUMBER}_{CHANNEL}.nii"
     # voxel_path = "/mnt/ito/diffusion-anomaly/data/archive/BraTS2020_ValidationData/BraTS20_Validation_342/BraTS20_Training_342_seg.nii"
-    voxel_path = "/media/user/ボリューム/brats_imgs/test_labels/BraTS20_Training_342/slice_080/BraTS20_Training_342_seg_080.nii.gz"
-    # voxel_path = "/mnt/ito/diffusion-anomaly/data/brats/test_labels/000247-label.nii.gz"
-    nib_voxel = nibabel.load(voxel_path)
-    np_voxel = nib_voxel.get_fdata()
-    # np_voxel = np_voxel[:, :, 80]
-    norm_image = cv2.normalize(
-        np_voxel, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+    # voxel_path = "/media/user/ボリューム/brats_imgs/test/BraTS20_Training_349/slice_099/BraTS20_Training_349_flair_099.nii.gz"
+    # # voxel_path = "/mnt/ito/diffusion-anomaly/data/brats/test_labels/000247-label.nii.gz"
+    # nib_voxel = nibabel.load(voxel_path)
+    # np_voxel = nib_voxel.get_fdata()
+    # # np_voxel = np_voxel[:, :, 80]
+    # norm_image = cv2.normalize(
+    #     np_voxel, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+    # )
+    # norm_image = norm_image.astype(np.uint8)
+    # hresh_value, binarized_input_image = cv2.threshold(
+    #     norm_image, 50, 255, cv2.THRESH_BINARY
+    # )
+    # padded_mask = np.zeros((256, 256), dtype=np.uint8)
+    # padded_mask[8:-8, 8:-8] = norm_image
+
+    padded_mask = cv2.imread(
+        "/mnt/ito/diffusion-anomaly/out/sample_data_and_heatmap/349/099_input_label.png",
+        cv2.IMREAD_GRAYSCALE,
     )
-    norm_image = norm_image.astype(np.uint8)
-    hresh_value, binarized_input_image = cv2.threshold(
-        norm_image, 50, 255, cv2.THRESH_BINARY
-    )
-    padded_mask = np.zeros((256, 256), dtype=np.uint8)
-    padded_mask[8:-8, 8:-8] = norm_image
+
+    # padded_mask = torch.load(
+    #     "/mnt/ito/diffusion-anomaly/out/sample_data_and_heatmap/349/099_input_label.pt"
+    # )
+    # padded_mask = padded_mask.numpy()
 
     # ピクセル値のヒストグラムを表示
     plt.figure(figsize=(8, 6))

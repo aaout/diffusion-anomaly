@@ -137,12 +137,12 @@ def main():
         # 複数の情報を持つ入力データimgを別々の変数に格納
         subject_number = file_name.split("_")[2]
         slice_num = file_name.split(".")[0].split("_")[-1]
-        input_img = img[0]
+        input_img = img[0].cpu()
         input_img_t1 = input_img[0, 0, ...]
         input_img_t1ce = input_img[0, 1, ...]
         input_img_t2 = input_img[0, 2, ...]
         input_img_flair = input_img[0, 3, ...]
-        label_img = img[3][0, ...]
+        input_img_label = img[3][0, ...].cpu()
         normal_or_abnormal = img[2]
 
         # 特定の被験者からサンプリングを開始する場合
@@ -187,19 +187,20 @@ def main():
         print("time for 1000", start.elapsed_time(end))
 
         # sampleしたデータも分かりやすいように変数名変更
+        sample = sample.cpu()
         sample_img_t1 = sample[0, 0, ...]
         sample_img_t1ce = sample[0, 1, ...]
         sample_img_t2 = sample[0, 2, ...]
         sample_img_flair = sample[0, 3, ...]
 
         if args.dataset == "brats":
-            # 入力, 生成データを保存するフォルダを作成
+            # 入力, 生成, 差分データを保存するフォルダを作成
             os.makedirs(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/",
                 exist_ok=True,
             )
 
-            # NOTE: 画像を保存する際は以下の手順を踏む
+            # XXX: 画像を保存する際は以下の手順を踏む
             # 1. tensor型をnumpy型に変換
             # 2. cv2.normalizeでピクセル値を0~255に正規化
             # 3. astype(np.uint8)で型をuint8に変換
@@ -208,185 +209,183 @@ def main():
 
             # ここから入力データの保存
             # 入力データのt1チャネルを保存
-            input_img_t1 = input_img_t1.cpu().numpy()
+            th.save(
+                input_img_t1,
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_t1.pt",
+            )
+            input_img_t1_np = input_img_t1.numpy()
             norm_input_img_t1 = cv2.normalize(
-                input_img_t1, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                input_img_t1_np, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
             )
             norm_input_img_t1 = norm_input_img_t1.astype(np.uint8)
             plt.imshow(norm_input_img_t1, cmap="gray")
             plt.axis("off")
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_input_t1.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_t1.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
             # 入力データのt1ceチャネルを保存
-            input_img_t1ce = input_img_t1ce.cpu().numpy()
+            th.save(
+                input_img_t1ce,
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_t1ce.pt",
+            )
+            input_img_t1ce_np = input_img_t1ce.numpy()
             norm_input_img_t1ce = cv2.normalize(
-                input_img_t1ce, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                input_img_t1ce_np, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
             )
             norm_input_img_t1ce = norm_input_img_t1ce.astype(np.uint8)
             plt.imshow(norm_input_img_t1ce, cmap="gray")
             plt.axis("off")
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_input_t1ce.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_t1ce.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
             # 入力データのt2チャネルを保存
-            input_img_t2 = input_img_t2.cpu().numpy()
+            th.save(
+                input_img_t2,
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_t2.pt",
+            )
+            input_img_t2_np = input_img_t2.numpy()
             norm_input_img_t2 = cv2.normalize(
-                input_img_t2, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                input_img_t2_np, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
             )
             norm_input_img_t2 = norm_input_img_t2.astype(np.uint8)
             plt.imshow(norm_input_img_t2, cmap="gray")
             plt.axis("off")
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_input_t2.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_t2.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
             # 入力データのflairチャネルを保存
-            input_img_flair = input_img_flair.cpu().numpy()
+            th.save(
+                input_img_flair,
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_flair.pt",
+            )
+            input_img_flair_np = input_img_flair.numpy()
             norm_input_img_flair = cv2.normalize(
-                input_img_flair, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                input_img_flair_np, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
             )
             norm_input_img_flair = norm_input_img_flair.astype(np.uint8)
             plt.imshow(norm_input_img_flair, cmap="gray")
             plt.axis("off")
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_input_flair.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_flair.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
             # 入力データのlabelチャネルを保存
-            input_img_label = label_img.cpu().numpy()
+            th.save(
+                input_img_label,
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_label.pt",
+            )
+            input_img_label_np = input_img_label.numpy()
             norm_input_img_label = cv2.normalize(
-                input_img_label, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                input_img_label_np, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
             )
             norm_input_img_label = norm_input_img_label.astype(np.uint8)
             plt.imshow(norm_input_img_label, cmap="gray")
             plt.axis("off")
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_input_label.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_input_label.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
-            # plt.figure(figsize=(8, 6))
-            # plt.hist(
-            #     norm_input_img_label.ravel(), bins=100, color="b", alpha=0.7, rwidth=0.8
-            # )
-            # plt.grid(axis="y", linestyle="--", alpha=0.7)
-            # plt.tight_layout()
-            # plt.ylim(0, 2000)
-            # plt.show()
-            # plt.savefig(
-            #     f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_input_label_hist.jpg",
-            #     bbox_inches="tight",
-            #     pad_inches=0,
-            # )
-            # plt.close()
-
             # ここから生成データの保存
             # 生成データのt1チャネルを保存
-            sample_img_t1 = sample_img_t1.cpu().numpy()
+            th.save(
+                sample_img_t1,
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_sample_t1.pt",
+            )
+            sample_img_t1_np = sample_img_t1.numpy()
             norm_sample_img_t1 = cv2.normalize(
-                sample_img_t1, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                sample_img_t1_np, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
             )
             norm_sample_img_t1 = norm_sample_img_t1.astype(np.uint8)
             plt.imshow(norm_sample_img_t1, cmap="gray")
             plt.axis("off")
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_sample_t1.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_sample_t1.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
             # 生成データのt1ceチャネルを保存
-            sample_img_t1ce = sample_img_t1ce.cpu().numpy()
+            th.save(
+                sample_img_t1ce,
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_sample_t1ce.pt",
+            )
+            sample_img_t1ce_np = sample_img_t1ce.numpy()
             norm_sample_img_t1ce = cv2.normalize(
-                sample_img_t1ce, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                sample_img_t1ce_np, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
             )
             norm_sample_img_t1ce = norm_sample_img_t1ce.astype(np.uint8)
             plt.imshow(norm_sample_img_t1ce, cmap="gray")
             plt.axis("off")
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_sample_t1ce.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_sample_t1ce.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
             # 生成データのt2チャネルを保存
-            sample_img_t2 = sample_img_t2.cpu().numpy()
+            th.save(
+                sample_img_t2,
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_sample_t2.pt",
+            )
+            sample_img_t2_np = sample_img_t2.numpy()
             norm_sample_img_t2 = cv2.normalize(
-                sample_img_t2, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                sample_img_t2_np, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
             )
             norm_sample_img_t2 = norm_sample_img_t2.astype(np.uint8)
             plt.imshow(norm_sample_img_t2, cmap="gray")
             plt.axis("off")
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_sample_t2.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_sample_t2.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
             # 生成データのflairチャネルを保存
-            sample_img_flair = sample_img_flair.cpu().numpy()
+            th.save(
+                sample_img_flair,
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_sample_flair.pt",
+            )
+            sample_img_flair_np = sample_img_flair.numpy()
             norm_sample_img_flair = cv2.normalize(
-                sample_img_flair, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
+                sample_img_flair_np, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
             )
             norm_sample_img_flair = norm_sample_img_flair.astype(np.uint8)
             plt.imshow(norm_sample_img_flair, cmap="gray")
             plt.axis("off")
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_sample_flair.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_sample_flair.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
-            sys.exit()
 
-            # sampleしたデータをjpgとして保存
-            vutils.save_image(
-                sample_img_t1,
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_sample_t1.jpg",
-            )
-            vutils.save_image(
-                sample_img_t1ce,
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_sample_t1ce.jpg",
-            )
-            vutils.save_image(
-                sample_img_t2,
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_sample_t2.jpg",
-            )
-            vutils.save_image(
-                sample_img_flair,
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_sample_flair.jpg",
-            )
-
-            # TODO: フォルダパス修正(.ptも.jpgも同じフォルダにまとめる)
-            # 差分データをptとして保存
-            diff_t1 = input_img_t1 - sample_img_t1.cpu()
-            os.makedirs(
-                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}",
-                exist_ok=True,
-            )
+            # ここから差分データの保存
+            # 差分データのt1チャネルを保存
+            diff_t1 = input_img_t1 - sample_img_t1
             th.save(
                 diff_t1,
-                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_t1.pt",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_diff_t1.pt",
             )
             # 入力データ(input_img)とsampleしたデータ(sample_img)の差分をヒートマップとして保存
             heatmap_t1 = plt.imshow(
@@ -394,71 +393,71 @@ def main():
             )
             plt.colorbar(heatmap_t1)
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_heatmap_t1.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_heatmap_t1.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
-            diff_t1ce = input_img_t1ce - sample_img_t1ce.cpu()
+            diff_t1ce = input_img_t1ce - sample_img_t1ce
             th.save(
                 diff_t1ce,
-                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_t1ce.pt",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_diff_t1ce.pt",
             )
             heatmap_t1ce = plt.imshow(
                 diff_t1ce, cmap="bwr", interpolation="nearest", vmax=1, vmin=-1
             )
             plt.colorbar(heatmap_t1ce)
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_heatmap_t1ce.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_heatmap_t1ce.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
-            diff_t2 = input_img_t2 - sample_img_t2.cpu()
+            diff_t2 = input_img_t2 - sample_img_t2
             th.save(
                 diff_t2,
-                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_t2.pt",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_diff_t2.pt",
             )
             heatmap_t2 = plt.imshow(
                 diff_t2, cmap="bwr", interpolation="nearest", vmax=1, vmin=-1
             )
             plt.colorbar(heatmap_t2)
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_heatmap_t2.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_heatmap_t2.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
-            diff_flair = input_img_flair - sample_img_flair.cpu()
+            diff_flair = input_img_flair - sample_img_flair
             th.save(
                 diff_flair,
-                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_flair.pt",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_diff_flair.pt",
             )
             heatmap_flair = plt.imshow(
                 diff_flair.cpu(), cmap="bwr", interpolation="nearest", vmax=1, vmin=-1
             )
             plt.colorbar(heatmap_flair)
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_heatmap_flair.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_heatmap_flair.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
             plt.close()
 
-            diff_all = abs(org[0, :4, ...] - sample[0, ...]).sum(dim=0)
+            diff_all = abs(org[0, :4, ...].cpu() - sample[0, ...]).sum(dim=0)
             th.save(
                 diff_all,
-                f"/media/user/ボリューム/diffmap_pt/{FOLDER_NAME}/{subject_number}/{slice_num}/diff_all.pt",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_diff_all.pt",
             )
             heatmap_all = plt.imshow(
                 diff_all.cpu(), cmap="jet", interpolation="nearest"
             )
             plt.colorbar(heatmap_all)
             plt.savefig(
-                f"/mnt/ito/diffusion-anomaly/out/{FOLDER_NAME}/{subject_number}/{slice_num}_heatmap_all.jpg",
+                f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_heatmap_all.jpg",
                 bbox_inches="tight",
                 pad_inches=0,
             )
