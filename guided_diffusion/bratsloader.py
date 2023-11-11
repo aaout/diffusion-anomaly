@@ -70,11 +70,14 @@ class BRATSDataset(torch.utils.data.Dataset):
             input_test_data_path = filedict["t1"]
             seg_test_data_path = input_test_data_path.replace("t1", "seg")
             seg_test_data_path = seg_test_data_path.replace("test", "test_labels")
-            seg = nibabel.load(seg_test_data_path)
-            seg = seg.get_fdata()
             image = torch.zeros(4, 256, 256)
             image[:, 8:-8, 8:-8] = out
-            label = seg[None, ...]
+            seg = nibabel.load(seg_test_data_path)
+            seg = torch.tensor(seg.get_fdata())
+            seg_image = torch.zeros(256, 256)
+            seg_image[8:-8, 8:-8] = seg
+            label = seg_image
+
             if seg.max() > 0:
                 weak_label = 1
             else:
