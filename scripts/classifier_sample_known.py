@@ -187,11 +187,10 @@ def main():
         print("time for 1000", start.elapsed_time(end))
 
         # sampleしたデータも分かりやすいように変数名変更
-        sample = sample.cpu()
-        sample_img_t1 = sample[0, 0, ...]
-        sample_img_t1ce = sample[0, 1, ...]
-        sample_img_t2 = sample[0, 2, ...]
-        sample_img_flair = sample[0, 3, ...]
+        sample_img_t1 = sample[0, 0, ...].cpu()
+        sample_img_t1ce = sample[0, 1, ...].cpu()
+        sample_img_t2 = sample[0, 2, ...].cpu()
+        sample_img_flair = sample[0, 3, ...].cpu()
 
         if args.dataset == "brats":
             # 入力, 生成, 差分データを保存するフォルダを作成
@@ -200,6 +199,7 @@ def main():
                 exist_ok=True,
             )
 
+            # TODO: 保存する関数を作成
             # XXX: 画像を保存する際は以下の手順を踏む
             # 1. tensor型をnumpy型に変換
             # 2. cv2.normalizeでピクセル値を0~255に正規化
@@ -447,7 +447,7 @@ def main():
             )
             plt.close()
 
-            diff_all = abs(org[0, :4, ...].cpu() - sample[0, ...]).sum(dim=0)
+            diff_all = abs(org[0, :4, ...].cpu() - sample[0, ...].cpu()).sum(dim=0)
             th.save(
                 diff_all,
                 f"/media/user/ボリューム/out/{FOLDER_NAME}/{subject_number}/{slice_num}/{subject_number}_{slice_num}_diff_all.pt",
