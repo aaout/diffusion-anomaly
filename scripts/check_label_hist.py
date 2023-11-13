@@ -27,7 +27,7 @@ if __name__ == "__main__":
     #     np_voxel, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX
     # )
     # norm_image = norm_image.astype(np.uint8)
-    # hresh_value, binarized_input_image = cv2.threshold(
+    # thres_value, binarized_input_image = cv2.threshold(
     #     norm_image, 50, 255, cv2.THRESH_BINARY
     # )
     # padded_mask = np.zeros((256, 256), dtype=np.uint8)
