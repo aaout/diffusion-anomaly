@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from .train_util import visualize
 from visdom import Visdom
+
 viz = Visdom(port=8850)
 from scipy import ndimage
 
@@ -51,9 +52,8 @@ def load_data(
         # Assume classes are the first part of the filename,
         # before an underscore.
 
-        class_names =[path.split("/")[3] for path in all_files] #9 or 3
-        print('classnames', class_names)
-
+        class_names = [path.split("/")[3] for path in all_files]  # 9 or 3
+        print("classnames", class_names)
 
         sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
         classes = [sorted_classes[x] for x in class_names]
@@ -75,7 +75,7 @@ def load_data(
         loader = DataLoader(
             dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=True
         )
-    print('lenloader', len(loader))
+    print("lenloader", len(loader))
     while True:
         yield from loader
 
@@ -102,26 +102,26 @@ class ImageDataset(Dataset):
         num_shards=1,
         random_crop=False,
         random_flip=False,
-        exts=['jpg', 'jpeg', 'png', 'npy']
+        exts=["jpg", "jpeg", "png", "npy"],
     ):
         super().__init__()
         self.resolution = resolution
-        self.local_images = [p for ext in exts for p in Path(f'{image_paths}').glob(f'**/*.{ext}')]
-
+        self.local_images = [
+            p for ext in exts for p in Path(f"{image_paths}").glob(f"**/*.{ext}")
+        ]
 
         self.local_classes = None if classes is None else classes[shard:][::num_shards]
         self.random_crop = random_crop
         self.random_flip = random_flip
 
     def __len__(self):
-        print('len',  len(self.local_images))
+        print("len", len(self.local_images))
         return len(self.local_images)
 
     def __getitem__(self, idx):
         path = self.local_images[idx]
-        name=str(path).split("/")[-1].split(".")[0]
-        print('path', name)
-
+        name = str(path).split("/")[-1].split(".")[0]
+        print("path", name)
 
         numpy_img = np.load(path)
         arr = visualize(numpy_img).astype(np.float32)
@@ -129,7 +129,7 @@ class ImageDataset(Dataset):
         out_dict = {}
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
-            out_dict["path"]=name
+            out_dict["path"] = name
 
         return np.transpose(arr, [2, 0, 1]), out_dict
 
@@ -138,7 +138,7 @@ def center_crop_arr(pil_image, image_size):
     # We are not on a new enough PIL to support the `reducing_gap`
     # argument, which uses BOX downsampling at powers of two first.
     # Thus, we do it by hand to improve downsample quality.
-    while min(*pil_image.size) >= 3* image_size:
+    while min(*pil_image.size) >= 3 * image_size:
         pil_image = pil_image.resize(
             tuple(x // 2 for x in pil_image.size), resample=Image.BOX
         )
@@ -151,19 +151,19 @@ def center_crop_arr(pil_image, image_size):
     arr = np.array(pil_image)
     crop_y = (arr.shape[0] - image_size) // 2
     crop_x = (arr.shape[1] - image_size) // 2
-   # crop_y=64; crop_x=64
+    # crop_y=64; crop_x=64
     return arr[crop_y : crop_y + image_size, crop_x : crop_x + image_size]
 
+
 def zeropatch(pil_image, image_size):
-    im=np.array(th.zeros(image_size, image_size,3))
+    im = np.array(th.zeros(image_size, image_size, 3))
     arr = np.array(pil_image)
-    crop_x = (-arr.shape[0] + image_size)
+    crop_x = -arr.shape[0] + image_size
     crop_y = abs(arr.shape[1] - image_size) // 2
-  #  print('crop', crop_y, crop_x) #crop_y=64; crop_x=64
-    im[0:arr.shape[0] , crop_y : crop_y +arr.shape[1],:]=arr
+    #  print('crop', crop_y, crop_x) #crop_y=64; crop_x=64
+    im[0 : arr.shape[0], crop_y : crop_y + arr.shape[1], :] = arr
 
-    return im#arr[crop_y : crop_y + image_size, crop_x : crop_x + image_size]
-
+    return im  # arr[crop_y : crop_y + image_size, crop_x : crop_x + image_size]
 
 
 def random_crop_arr(pil_image, image_size, min_crop_frac=0.8, max_crop_frac=1.0):

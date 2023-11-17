@@ -30,7 +30,7 @@ def space_timesteps(num_timesteps, section_counts):
     if isinstance(section_counts, str):
         if section_counts.startswith("ddim"):
             desired_count = int(section_counts[len("ddim") :])
-            print('desired_cound', desired_count )
+            print("desired_cound", desired_count)
             for i in range(1, num_timesteps):
                 if len(range(0, num_timesteps, i)) == desired_count:
                     return set(range(0, num_timesteps, i))
@@ -114,7 +114,6 @@ class SpacedDiffusion(GaussianDiffusion):
             model, self.timestep_map, self.rescale_timesteps, self.original_num_steps
         )
 
-
     def _scale_timesteps(self, t):
         # Scaling is done by the wrapped model.
         return t
@@ -126,7 +125,6 @@ class _WrappedModel:
         self.timestep_map = timestep_map
         self.rescale_timesteps = rescale_timesteps
         self.original_num_steps = original_num_steps
-
 
     def __call__(self, x, ts, **kwargs):
         map_tensor = th.tensor(self.timestep_map, device=ts.device, dtype=ts.dtype)

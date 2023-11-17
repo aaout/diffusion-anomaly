@@ -13,16 +13,19 @@ from .fp16_util import MixedPrecisionTrainer
 from .nn import update_ema
 from .resample import LossAwareSampler, UniformSampler
 from visdom import Visdom
+
 viz = Visdom(port=8850)
 
 
 INITIAL_LOG_LOSS_SCALE = 20.0
 
+
 def visualize(img):
     _min = img.min()
     _max = img.max()
-    normalized_img = (img - _min)/ (_max - _min)
+    normalized_img = (img - _min) / (_max - _min)
     return normalized_img
+
 
 class TrainLoop:
     def __init__(
@@ -43,12 +46,12 @@ class TrainLoop:
         schedule_sampler=None,
         weight_decay=0.0,
         lr_anneal_steps=0,
-        dataset='brats',
+        dataset="brats",
     ):
         self.model = model
         self.diffusion = diffusion
         self.datal = data
-        self.dataset=dataset
+        self.dataset = dataset
         self.iterdatal = iter(data)
         self.batch_size = batch_size
         self.microbatch = microbatch if microbatch > 0 else batch_size
@@ -119,7 +122,7 @@ class TrainLoop:
         resume_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
 
         if resume_checkpoint:
-            print('resume model')
+            print("resume model")
             self.resume_step = parse_resume_step_from_filename(resume_checkpoint)
             if dist.get_rank() == 0:
                 logger.log(f"loading model from checkpoint: {resume_checkpoint}...")
@@ -166,13 +169,13 @@ class TrainLoop:
             not self.lr_anneal_steps
             or self.step + self.resume_step < self.lr_anneal_steps
         ):
-            if self.dataset=='brats':
+            if self.dataset == "brats":
                 try:
                     batch, cond, label = next(self.iterdatal)
                 except:
                     self.iterdatal = iter(self.datal)
                     batch, cond, label, _, _ = next(self.iterdatal)
-            elif self.dataset=='chexpert':
+            elif self.dataset == "chexpert":
                 batch, cond = next(self.datal)
                 cond.pop("path", None)
 
@@ -191,24 +194,24 @@ class TrainLoop:
             self.save()
 
     def run_step(self, batch, cond):
-        lossmse,  sample = self.forward_backward(batch, cond)
+        lossmse, sample = self.forward_backward(batch, cond)
         took_step = self.mp_trainer.optimize(self.opt)
         if took_step:
             self._update_ema()
         self._anneal_lr()
         self.log_step()
-        return lossmse,  sample
+        return lossmse, sample
 
     def forward_backward(self, batch, cond):
         self.mp_trainer.zero_grad()
         for i in range(0, batch.shape[0], self.microbatch):
             micro = batch[i : i + self.microbatch].to(dist_util.dev())
-            print('micro', micro.shape)
+            print("micro", micro.shape)
             micro_cond = {
                 k: v[i : i + self.microbatch].to(dist_util.dev())
                 for k, v in cond.items()
             }
-       
+
             last_batch = (i + self.microbatch) >= batch.shape[0]
             t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
@@ -237,13 +240,13 @@ class TrainLoop:
             loss = (losses["loss"] * weights).mean()
 
             lossmse = (losses["mse"] * weights).mean().detach()
-           
+
             log_loss_dict(
                 self.diffusion, t, {k: v * weights for k, v in losses.items()}
             )
             self.mp_trainer.backward(loss)
 
-            return lossmse.detach(),  sample
+            return lossmse.detach(), sample
 
     def _update_ema(self):
         for rate, params in zip(self.ema_rate, self.ema_params):
@@ -269,8 +272,10 @@ class TrainLoop:
                 if not rate:
                     filename = f"brats2update{(self.step+self.resume_step):06d}.pt"
                 else:
-                    filename = f"emabrats2update_{rate}_{(self.step+self.resume_step):06d}.pt"
-                print('filename', filename)
+                    filename = (
+                        f"emabrats2update_{rate}_{(self.step+self.resume_step):06d}.pt"
+                    )
+                print("filename", filename)
                 with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
                     th.save(state_dict, f)
 
@@ -280,7 +285,10 @@ class TrainLoop:
 
         if dist.get_rank() == 0:
             with bf.BlobFile(
-                bf.join(get_blob_logdir(), f"optbrats2update{(self.step+self.resume_step):06d}.pt"),
+                bf.join(
+                    get_blob_logdir(),
+                    f"optbrats2update{(self.step+self.resume_step):06d}.pt",
+                ),
                 "wb",
             ) as f:
                 th.save(self.opt.state_dict(), f)

@@ -21,7 +21,7 @@ def diffusion_defaults():
         predict_xstart=False,
         rescale_timesteps=False,
         rescale_learned_sigmas=False,
-        dataset='brats'
+        dataset="brats",
     )
 
 
@@ -38,7 +38,7 @@ def classifier_defaults():
         classifier_use_scale_shift_norm=True,  # False
         classifier_resblock_updown=True,  # False
         classifier_pool="spatial",
-        dataset='brats'
+        dataset="brats",
     )
 
 
@@ -97,9 +97,9 @@ def create_model_and_diffusion(
     resblock_updown,
     use_fp16,
     use_new_attention_order,
-    dataset
+    dataset,
 ):
-    print('timestepresp1',timestep_respacing )
+    print("timestepresp1", timestep_respacing)
     model = create_model(
         image_size,
         num_channels,
@@ -149,7 +149,7 @@ def create_model(
     resblock_updown=False,
     use_fp16=False,
     use_new_attention_order=False,
-    dataset='brats'
+    dataset="brats",
 ):
     if channel_mult == "":
         if image_size == 512:
@@ -168,19 +168,18 @@ def create_model(
     attention_ds = []
     for res in attention_resolutions.split(","):
         attention_ds.append(image_size // int(res))
-        
-    if dataset=='brats':
-      number_in_channels=4
+
+    if dataset == "brats":
+        number_in_channels = 4
     else:
-      number_in_channels=1
-    print('numberinchannels', number_in_channels)
-      
+        number_in_channels = 1
+    print("numberinchannels", number_in_channels)
 
     return UNetModel(
         image_size=image_size,
         in_channels=number_in_channels,
         model_channels=num_channels,
-        out_channels=2*number_in_channels,#12,#(3 if not learn_sigma else 6),
+        out_channels=2 * number_in_channels,  # 12,#(3 if not learn_sigma else 6),
         num_res_blocks=num_res_blocks,
         attention_resolutions=tuple(attention_ds),
         dropout=dropout,
@@ -216,7 +215,7 @@ def create_classifier_and_diffusion(
     rescale_learned_sigmas,
     dataset,
 ):
-    print('timestepresp2', timestep_respacing)
+    print("timestepresp2", timestep_respacing)
     classifier = create_classifier(
         image_size,
         classifier_use_fp16,
@@ -264,12 +263,11 @@ def create_classifier(
     attention_ds = []
     for res in classifier_attention_resolutions.split(","):
         attention_ds.append(image_size // int(res))
-    if dataset=='brats':
-      number_in_channels=4
+    if dataset == "brats":
+        number_in_channels = 4
     else:
-      number_in_channels=1
-    print('number_in_channels classifier', number_in_channels)
-      
+        number_in_channels = 1
+    print("number_in_channels classifier", number_in_channels)
 
     return EncoderUNetModel(
         image_size=image_size,
@@ -322,7 +320,7 @@ def sr_create_model_and_diffusion(
     resblock_updown,
     use_fp16,
 ):
-    print('timestepresp3', timestep_respacing)
+    print("timestepresp3", timestep_respacing)
     model = sr_create_model(
         large_size,
         small_size,
@@ -426,7 +424,7 @@ def create_gaussian_diffusion(
         loss_type = gd.LossType.MSE
     if not timestep_respacing:
         timestep_respacing = [steps]
-    print('steps', steps, timestep_respacing)
+    print("steps", steps, timestep_respacing)
     return SpacedDiffusion(
         use_timesteps=space_timesteps(steps, timestep_respacing),
         betas=betas,

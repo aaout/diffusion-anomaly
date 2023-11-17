@@ -32,7 +32,7 @@ class AttentionPool2d(nn.Module):
     ):
         super().__init__()
         self.positional_embedding = nn.Parameter(
-            th.randn(embed_dim, spacial_dim ** 2 + 1) / embed_dim ** 0.5
+            th.randn(embed_dim, spacial_dim**2 + 1) / embed_dim**0.5
         )
         self.qkv_proj = conv_nd(1, embed_dim, 3 * embed_dim, 1)
         self.c_proj = conv_nd(1, embed_dim, output_dim or embed_dim, 1)
@@ -320,7 +320,7 @@ def count_flops_attn(model, _x, y):
     # We perform two matmuls with the same number of ops.
     # The first computes the weight matrix, the second computes
     # the combination of the value vectors.
-    matmul_ops = 2 * b * (num_spatial ** 2) * c
+    matmul_ops = 2 * b * (num_spatial**2) * c
     model.total_ops += th.DoubleTensor([matmul_ops])
 
 
@@ -828,9 +828,9 @@ class EncoderUNetModel(nn.Module):
         )
         self._feature_size += ch
         self.pool = pool
-        self.gap = nn.AvgPool2d((8, 8))  #global average pooling
+        self.gap = nn.AvgPool2d((8, 8))  # global average pooling
         self.cam_feature_maps = None
-        print('pool', pool)
+        print("pool", pool)
         if pool == "adaptive":
             self.out = nn.Sequential(
                 normalization(ch),
@@ -849,14 +849,14 @@ class EncoderUNetModel(nn.Module):
                 ),
             )
         elif pool == "spatial":
-            print('spatial')
-          #  self.out = nn.Linear(self._feature_size, self.out_channels)
+            print("spatial")
+            #  self.out = nn.Linear(self._feature_size, self.out_channels)
             self.out = nn.Linear(256, self.out_channels)
-            #nn.Sequential(
-              #  nn.Linear(self._feature_size, 2048),
-             #   nn.ReLU(),
+            # nn.Sequential(
+            #  nn.Linear(self._feature_size, 2048),
+            #   nn.ReLU(),
             #    nn.Linear(self._feature_size, self.out_channels),
-           # )
+        # )
         elif pool == "spatial_v2":
             self.out = nn.Sequential(
                 nn.Linear(self._feature_size, 2048),
@@ -882,10 +882,9 @@ class EncoderUNetModel(nn.Module):
         self.middle_block.apply(convert_module_to_f32)
 
     def get_class_activation_maps(self):
-
         """compute Class Activation Maps"""
 
-        assert (self.cam_feature_maps is not None), "no input has ever been passed to net"
+        assert self.cam_feature_maps is not None, "no input has ever been passed to net"
 
         # def returnCAM(feature_conv, weight_softmax, class_idx):
         #     # generate the class activation maps upsample to 256x256
@@ -901,27 +900,30 @@ class EncoderUNetModel(nn.Module):
         #         output_cam.append(cv2.resize(cam_img, size_upsample))
         #     return output_cam
 
-        weights = self.out.weight[:,None,:]
-        print('weigtht', weights.shape)
-        bz, nc, h, w =  self.cam_feature_maps.shape
-        self.cam_feature_maps=self.cam_feature_maps[0,None,...]
-        print('bznchw', bz, nc, h,w)
-        print('rm', self.cam_feature_maps.shape)
+        weights = self.out.weight[:, None, :]
+        print("weigtht", weights.shape)
+        bz, nc, h, w = self.cam_feature_maps.shape
+        self.cam_feature_maps = self.cam_feature_maps[0, None, ...]
+        print("bznchw", bz, nc, h, w)
+        print("rm", self.cam_feature_maps.shape)
         beforeDot = self.cam_feature_maps.reshape((256, 8 * 8))
-        print('beforedot', beforeDot.shape)
-       # cam = np.matmul(weight[idx], beforeDot)  # -> (1, 512) x (512, 49) = (1, 49)
+        print("beforedot", beforeDot.shape)
+        # cam = np.matmul(weight[idx], beforeDot)  # -> (1, 512) x (512, 49) = (1, 49)
         output_cam = []
-        for idx in [0,1]:
-            cam=np.matmul(np.array(weights[idx].detach().cpu()), np.array(beforeDot.detach().cpu()))
-            print('cam', cam.shape)
-            cam = cam.reshape(8,8)
+        for idx in [0, 1]:
+            cam = np.matmul(
+                np.array(weights[idx].detach().cpu()),
+                np.array(beforeDot.detach().cpu()),
+            )
+            print("cam", cam.shape)
+            cam = cam.reshape(8, 8)
             cam = cam - np.min(cam)
             cam_img = cam / np.max(cam)
             cam_img = np.uint8(255 * cam_img)
-            op=cv2.resize(cam_img, (256,256))
-            print('op', op.shape)
-            output_cam.append(cv2.resize(cam_img, (256,256)))
-        print('output_cam', output_cam[0].shape)
+            op = cv2.resize(cam_img, (256, 256))
+            print("op", op.shape)
+            output_cam.append(cv2.resize(cam_img, (256, 256)))
+        print("output_cam", output_cam[0].shape)
         return output_cam
 
     def forward(self, x, timesteps):
@@ -941,7 +943,6 @@ class EncoderUNetModel(nn.Module):
             if self.pool.startswith("spatial"):
                 results.append(h.type(x.dtype).mean(dim=(2, 3)))
         h = self.middle_block(h, emb)
-
 
         if self.pool.startswith("spatial"):
             results.append(h.type(x.dtype).mean(dim=(2, 3)))
