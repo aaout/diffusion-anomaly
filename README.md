@@ -17,6 +17,7 @@
 
 ## Usage
 
+-   [ ] 環境構築方法
 -   [ ] 3 つのスクリプトファイルについての説明
 
 We set the flags as follows:
