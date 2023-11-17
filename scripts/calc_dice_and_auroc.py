@@ -11,6 +11,16 @@ from skimage.filters import threshold_otsu
 
 # DICE係数の計算
 def dice_coefficient(y_true, y_pred):
+    """
+    Computes the Dice coefficient between two binary arrays.
+
+    Args:
+        y_true (numpy.ndarray): Ground truth binary array.
+        y_pred (numpy.ndarray): Predicted binary array.
+
+    Returns:
+        float: Dice coefficient between y_true and y_pred.
+    """
     intersection = np.sum(y_true & y_pred)
     return (2.0 * intersection) / (np.sum(y_true) + np.sum(y_pred) + 1e-7)
 
