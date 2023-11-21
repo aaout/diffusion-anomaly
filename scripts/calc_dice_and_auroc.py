@@ -5,7 +5,7 @@ import torch
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, roc_curve, auc
 from skimage.filters import threshold_otsu
 
 
@@ -136,11 +136,22 @@ if __name__ == "__main__":
 
         # AUROCの計算
         flat_truth = norm_label_voxel_np.flatten()
-        flat_pred = bin_diff_all.flatten()
+        flat_pred = norm_diff_all_np.flatten()
         auroc = roc_auc_score(flat_truth, flat_pred)
         auroc_list.append(auroc)
         print(f"AUROC: {auroc}")
         print("")
+
+        # ROCカーブとROCの計算
+        # flat_truth = flat_truth / 255.0
+        # flat_pred = flat_pred / 255.0
+        # fpr, tpr, thresholds = roc_curve(flat_truth, flat_pred)
+        # print("fpr: ", fpr)
+        # print("tpr: ", tpr)
+        # print("thresholds: ", thresholds)
+        # roc_auc = auc(fpr, tpr)
+        # print(roc_auc)
+        # sys.exit()
 
     # # DICEとAUROCの値をJSON形式で保存
     dice_and_auroc_json = {}
