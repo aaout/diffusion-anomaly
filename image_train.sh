@@ -6,4 +6,4 @@ DIFFUSION_FLAGS="--diffusion_steps 1000 --noise_schedule linear --rescale_learne
 TRAIN_FLAGS="--lr 1e-4 --batch_size 8"
 CLASSIFIER_FLAGS="--image_size 256 --classifier_attention_resolutions 32,16,8 --classifier_depth 4 --classifier_width 32 --classifier_pool attention --classifier_resblock_updown True --classifier_use_scale_shift_norm True"
 SAMPLE_FLAGS="--batch_size 1 --num_samples 1 --timestep_respacing ddim1000 --use_ddim True"
-python3 scripts/image_train.py --data_dir /media/user/ボリューム2/brats_imgs/train --dataset brats $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS
+python3 scripts/image_train.py --data_dir /media/user/ボリューム/brats_imgs/train --dataset brats $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS
