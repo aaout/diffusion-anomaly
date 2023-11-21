@@ -65,11 +65,13 @@ def main():
     model, diffusion = create_classifier_and_diffusion(
         **args_to_dict(args, classifier_and_diffusion_defaults().keys()),
     )
+    # model.load_state_dict(dist_util.load_state_dict(args.classifier_path))
     model.to(dist_util.dev())
     if args.noised:
         schedule_sampler = create_named_schedule_sampler(
             args.schedule_sampler, diffusion, maxt=1000
         )
+    print("load trained model: ", args.classifier_path)
 
     resume_step = 0
     if args.resume_checkpoint:
@@ -133,9 +135,7 @@ def main():
         elif args.dataset == "chexpert":
             batch, extra = next(data_loader)
             labels = extra["y"].to(dist_util.dev())
-            # print('IS CHEXPERT')
 
-        # print('labels', labels.detach().numpy())
         batch = batch.to(dist_util.dev())
         labels = labels.to(dist_util.dev())
         if args.noised:
@@ -171,7 +171,6 @@ def main():
             losses[f"{prefix}_FP"] = fp
             losses[f"{prefix}_FN"] = fn
             losses[f"{prefix}_TP"] = tp
-            print("confusion matrix\n", conf_matrix)
 
         return losses
 
@@ -191,28 +190,26 @@ def main():
         )
         if args.anneal_lr:
             set_annealed_lr(opt, args.lr, (step + resume_step) / args.iterations)
-        print("step: ", step + resume_step)
 
         valid_losses = forward_backward_log(
             valid_data, step + resume_step, prefix="valid"
         )
         valid_sum_losses += valid_losses["valid_loss"].sum()
         valid_sum_acces += valid_losses["valid_acc"].sum()
-        sum_TP += valid_losses["valid_TP"]
+        sum_TN += valid_losses["valid_TN"]
         sum_FP += valid_losses["valid_FP"]
         sum_FN += valid_losses["valid_FN"]
-        sum_TN += valid_losses["valid_TN"]
+        sum_TP += valid_losses["valid_TP"]
         valid_samples += 1
-        print("valid acc: ", valid_losses["valid_acc"])
-        print("valid samples: ", valid_samples * args.batch_size)
 
     valid_mean_losses = valid_sum_losses / (valid_samples * args.batch_size)
     valid_mean_acces = valid_sum_acces / valid_samples
     print("valid_mean_losses", valid_mean_losses)
     print("valid_mean_acces", valid_mean_acces)
     print(
-        f"conf matrix: sum_TP: {sum_TP}, sum_FP: {sum_FP}, sum_FN: {sum_FN}, sum_TN: {sum_TN}"
+        f"conf matrix: sum_TN: {sum_TN}, sum_FP: {sum_FP}, sum_FN: {sum_FN}, sum_TP: {sum_TP}"
     )
+    print("")
 
     # if not step % args.log_interval:
     #     logger.dumpkvs()
@@ -269,6 +266,7 @@ def create_argparser():
     defaults = dict(
         data_dir="",
         val_data_dir="",
+        classifier_path="",
         noised=True,
         iterations=20000,
         lr=1e-4,
