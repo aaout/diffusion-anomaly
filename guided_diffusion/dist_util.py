@@ -52,7 +52,7 @@ def setup_dist():
     s.listen(1)
     port = s.getsockname()[1]
     s.close()
-    print("port2", port)
+    # print("port2", port)
     os.environ["MASTER_PORT"] = str(port)
     dist.init_process_group(backend=backend, init_method="env://")
 
