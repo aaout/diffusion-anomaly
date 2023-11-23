@@ -170,6 +170,7 @@ class TrainLoop:
             or self.step + self.resume_step < self.lr_anneal_steps
         ):
             if self.dataset == "brats":
+                # batch: 入力データ[4, 256, 256], cond: weakly label, label: ラベルデータ[1, 256, 256]
                 try:
                     batch, cond, label = next(self.iterdatal)
                 except:
@@ -194,6 +195,46 @@ class TrainLoop:
             self.save()
 
     def run_step(self, batch, cond):
+        lossmse, sample = self.forward_backward(batch, cond)
+        took_step = self.mp_trainer.optimize(self.opt)
+        if took_step:
+            self._update_ema()
+        self._anneal_lr()
+        self.log_step()
+        return lossmse, sample
+
+    def run_valid_loop(self):
+        i = 0
+
+        while (
+            not self.lr_anneal_steps
+            or self.step + self.resume_step < self.lr_anneal_steps
+        ):
+            if self.dataset == "brats":
+                try:
+                    batch, cond, label = next(self.iterdatal)
+                except:
+                    self.iterdatal = iter(self.datal)
+                    batch, cond, label, _, _ = next(self.iterdatal)
+            elif self.dataset == "chexpert":
+                batch, cond = next(self.datal)
+                cond.pop("path", None)
+
+            self.run_valid_step(batch, cond)
+
+            if self.step % self.log_interval == 0:
+                logger.dumpkvs()
+            if self.step % self.save_interval == 0:
+                self.save()
+                # Run for a finite amount of time in integration tests.
+                if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
+                    return
+            self.step += 1
+        # Save the last checkpoint if it wasn't already saved.
+        if (self.step - 1) % self.save_interval != 0:
+            self.save()
+
+    def run_valid_step(self, batch, cond):
         lossmse, sample = self.forward_backward(batch, cond)
         took_step = self.mp_trainer.optimize(self.opt)
         if took_step:

@@ -41,7 +41,7 @@ def main():
     logger.log("creating data loader...")
 
     if args.dataset == "brats":
-        ds = BRATSDataset(args.data_dir, test_flag=False)
+        ds = BRATSDataset(args.val_data_dir, test_flag=True)
         datal = th.utils.data.DataLoader(ds, batch_size=args.batch_size, shuffle=True)
     # data = iter(datal)
 
@@ -54,7 +54,7 @@ def main():
         )
         print("dataset is chexpert")
 
-    logger.log("training...")
+    logger.log("testing...")
     TrainLoop(
         model=model,
         diffusion=diffusion,
@@ -72,12 +72,13 @@ def main():
         weight_decay=args.weight_decay,
         lr_anneal_steps=args.lr_anneal_steps,
         dataset=args.dataset,
-    ).run_loop()
+    ).run_valid_loop()
 
 
 def create_argparser():
     defaults = dict(
         data_dir="",
+        val_data_dir="",
         schedule_sampler="uniform",
         lr=1e-4,
         weight_decay=0.0,
