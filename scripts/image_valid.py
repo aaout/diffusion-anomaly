@@ -5,6 +5,7 @@ import sys
 import argparse
 import torch as th
 
+
 sys.path.append("..")
 sys.path.append(".")
 from guided_diffusion.bratsloader import BRATSDataset
@@ -33,6 +34,10 @@ def main():
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
+    print("load trained model: ", args.model_path)
+    model.load_state_dict(
+        dist_util.load_state_dict(args.model_path, map_location=dist_util.dev())
+    )
     model.to(dist_util.dev())
     schedule_sampler = create_named_schedule_sampler(
         args.schedule_sampler, diffusion, maxt=1000
@@ -41,24 +46,16 @@ def main():
     logger.log("creating data loader...")
 
     if args.dataset == "brats":
-        ds = BRATSDataset(args.val_data_dir, test_flag=True)
-        datal = th.utils.data.DataLoader(ds, batch_size=args.batch_size, shuffle=True)
-    # data = iter(datal)
-
-    elif args.dataset == "chexpert":
-        datal = load_data(
-            data_dir=args.data_dir,
-            batch_size=1,
-            image_size=args.image_size,
-            class_cond=True,
+        valid_ds = BRATSDataset(args.val_data_dir, test_flag=False)
+        valid_dataloader = th.utils.data.DataLoader(
+            valid_ds, batch_size=args.batch_size, shuffle=True
         )
-        print("dataset is chexpert")
 
     logger.log("testing...")
     TrainLoop(
         model=model,
         diffusion=diffusion,
-        data=datal,
+        data=valid_dataloader,
         batch_size=args.batch_size,
         microbatch=args.microbatch,
         lr=args.lr,
@@ -79,6 +76,7 @@ def create_argparser():
     defaults = dict(
         data_dir="",
         val_data_dir="",
+        model_path="",
         schedule_sampler="uniform",
         lr=1e-4,
         weight_decay=0.0,

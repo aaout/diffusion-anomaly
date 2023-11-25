@@ -6,4 +6,4 @@ DIFFUSION_FLAGS="--diffusion_steps 1000 --noise_schedule linear --rescale_learne
 TRAIN_FLAGS="--lr 1e-4 --batch_size 7"
 CLASSIFIER_FLAGS="--image_size 256 --classifier_attention_resolutions 32,16,8 --classifier_depth 4 --classifier_width 32 --classifier_pool attention --classifier_resblock_updown True --classifier_use_scale_shift_norm True"
 SAMPLE_FLAGS="--batch_size 1 --num_samples 1 --timestep_respacing ddim1000 --use_ddim True"
-python3 scripts/image_valid.py --data_dir /media/user/ボリューム/brats_imgs/train --val_data_dir /media/user/ボリューム/brats_imgs/test  --dataset brats $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS
+python3 scripts/image_valid.py --data_dir /media/user/ボリューム/brats_imgs/train --val_data_dir /media/user/ボリューム/brats_imgs/train --model_path /mnt/ito/diffusion-anomaly/out/20231027_trained_diffusion_models/brats2update075000.pt --dataset brats $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS

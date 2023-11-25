@@ -1,6 +1,8 @@
 import copy
 import functools
 import os
+import sys
+from tqdm import tqdm
 
 import blobfile as bf
 import torch as th
@@ -205,41 +207,15 @@ class TrainLoop:
 
     def run_valid_loop(self):
         i = 0
-
-        while (
-            not self.lr_anneal_steps
-            or self.step + self.resume_step < self.lr_anneal_steps
-        ):
-            if self.dataset == "brats":
-                try:
-                    batch, cond, label = next(self.iterdatal)
-                except:
-                    self.iterdatal = iter(self.datal)
-                    batch, cond, label, _, _ = next(self.iterdatal)
-            elif self.dataset == "chexpert":
-                batch, cond = next(self.datal)
-                cond.pop("path", None)
-
-            self.run_valid_step(batch, cond)
-
-            if self.step % self.log_interval == 0:
-                logger.dumpkvs()
-            if self.step % self.save_interval == 0:
-                self.save()
-                # Run for a finite amount of time in integration tests.
-                if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
-                    return
-            self.step += 1
-        # Save the last checkpoint if it wasn't already saved.
-        if (self.step - 1) % self.save_interval != 0:
-            self.save()
+        if self.dataset == "brats":
+            with tqdm(self.datal) as pbar:
+                for valid_data in pbar:
+                    batch, cond, label, _, _ = valid_data
+                    self.run_valid_step(batch, cond)
+        logger.dumpkvs()
 
     def run_valid_step(self, batch, cond):
         lossmse, sample = self.forward_backward(batch, cond)
-        took_step = self.mp_trainer.optimize(self.opt)
-        if took_step:
-            self._update_ema()
-        self._anneal_lr()
         self.log_step()
         return lossmse, sample
 
@@ -247,7 +223,7 @@ class TrainLoop:
         self.mp_trainer.zero_grad()
         for i in range(0, batch.shape[0], self.microbatch):
             micro = batch[i : i + self.microbatch].to(dist_util.dev())
-            print("micro", micro.shape)
+            # print("micro", micro.shape)
             micro_cond = {
                 k: v[i : i + self.microbatch].to(dist_util.dev())
                 for k, v in cond.items()
