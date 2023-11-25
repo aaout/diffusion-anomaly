@@ -83,6 +83,8 @@ def scale_module(module, scale):
     return module
 
 
+# Channel x Height x Widthで平均を算出
+# [batch, 4, 256, 256] -> [batch]
 def mean_flat(tensor):
     """
     Take the mean over all non-batch dimensions.

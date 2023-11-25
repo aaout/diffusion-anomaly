@@ -4,6 +4,7 @@ https://github.com/hojonathanho/diffusion/blob/1e0dceb3b3495bbe19116a5e1b3596cd0
 
 Docstrings have been added, as well as DDIM sampling and a new collection of beta schedules.
 """
+import sys
 from PIL import Image
 from torch.autograd import Variable
 import enum
@@ -1006,6 +1007,7 @@ class GaussianDiffusion:
             img = out["sample"]
             saliency = out["saliency"]
 
+    # TODO: _vb_terms_bpdの理解
     def _vb_terms_bpd(
         self, model, x_start, x_t, t, clip_denoised=True, model_kwargs=None
     ):
@@ -1042,6 +1044,7 @@ class GaussianDiffusion:
         return {"output": output, "pred_xstart": out["pred_xstart"]}
 
     # def training_losses(self, model, x_start, t, model_kwargs=None, noise=None):
+    # TODO: lossの理解(通常lossとmseの違い)
     def training_losses(
         self, model, x_start, t, classifier=None, model_kwargs=None, noise=None
     ):
@@ -1075,7 +1078,9 @@ class GaussianDiffusion:
             )["output"]
             if self.loss_type == LossType.RESCALED_KL:
                 terms["loss"] *= self.num_timesteps
-        elif self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE:
+        elif (
+            self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE
+        ):  # default: LossType.MSE
             model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
 
             if self.model_var_type in [
