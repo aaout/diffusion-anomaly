@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, auc
 from skimage.filters import threshold_otsu
+import nibabel as nib
 
 
 # DICE係数の計算
@@ -31,6 +32,7 @@ if __name__ == "__main__":
     filename_list = []
     thresh_value_list = []
     diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap/"
+    save_dir = "/media/user/ボリューム/out/bin_voxel_and_label/"
 
     subject_dirs = sorted(os.listdir(diffmap_dirs))
     for subject_id in subject_dirs:
@@ -78,12 +80,22 @@ if __name__ == "__main__":
             beta=255,
             norm_type=cv2.NORM_MINMAX,
         )
+
+        # ヒートマップをNIfTI形式で保存
+        os.makedirs(f"{save_dir}/{subject_id}", exist_ok=True)
+        norm_diff_all_nii = nib.Nifti1Image(norm_diff_all_np, affine=np.eye(4))
+        norm_diff_all_nii.to_filename(f"{save_dir}/{subject_id}/diff_voxel.nii")
         norm_diff_all_np = norm_diff_all_np.astype(np.uint8)
+
         # Otsu thresholdingにより二値化
         diff_all_thresh = threshold_otsu(norm_diff_all_np)
         _, bin_diff_all = cv2.threshold(
             norm_diff_all_np, diff_all_thresh, 255, cv2.THRESH_BINARY
         )
+
+        # 二値化したヒートマップをNIfTI形式で保存
+        bin_diff_all_nii = nib.Nifti1Image(bin_diff_all, affine=np.eye(4))
+        bin_diff_all_nii.to_filename(f"{save_dir}/{subject_id}/otsubin_diff_voxel.nii")
         thresh_value_list.append(diff_all_thresh.astype(np.int64))
 
         label_voxel = torch.stack(label_voxel_list, dim=0)
@@ -95,39 +107,10 @@ if __name__ == "__main__":
             beta=255,
             norm_type=cv2.NORM_MINMAX,
         )
+        # 二値化したラベルデータをNIfTI形式で保存
+        norm_label_voxel_nii = nib.Nifti1Image(norm_label_voxel_np, affine=np.eye(4))
+        norm_label_voxel_nii.to_filename(f"{save_dir}/{subject_id}/bin_label_voxel.nii")
         norm_label_voxel_np = norm_label_voxel_np.astype(np.uint8)
-
-        # ピクセル値のヒストグラムを表示
-        # plt.figure(figsize=(8, 6))
-        # plt.hist(
-        #     bin_diff_all.ravel(),
-        #     bins=100,
-        #     color="b",
-        #     alpha=0.7,
-        #     rwidth=0.8,
-        # )
-        # plt.grid(axis="y", linestyle="--", alpha=0.7)
-        # plt.tight_layout()
-        # plt.ylim(0, 2000)
-        # plt.show()
-        # plt.savefig("diff_all_voxel_hist.jpg")
-        # plt.close()
-
-        # # ピクセル値のヒストグラムを表示
-        # plt.figure(figsize=(8, 6))
-        # plt.hist(
-        #     norm_label_voxel_np.ravel(),
-        #     bins=100,
-        #     color="b",
-        #     alpha=0.7,
-        #     rwidth=0.8,
-        # )
-        # plt.grid(axis="y", linestyle="--", alpha=0.7)
-        # plt.tight_layout()
-        # plt.ylim(0, 2000)
-        # plt.show()
-        # plt.savefig("label_voxel_list_hist.jpg")
-        # plt.close()
 
         # ラベル画像と二値化された画像のDICE係数を計算
         dice = dice_coefficient(norm_label_voxel_np, bin_diff_all)
