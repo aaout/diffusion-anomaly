@@ -1,4 +1,7 @@
 .git
 data
+images
 out
+output
 __pycache__
+*.pth
