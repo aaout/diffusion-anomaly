@@ -7,11 +7,12 @@ import sys
 import nibabel
 from scipy import ndimage
 import matplotlib.pyplot as plt
+import cv2
 
 
 if __name__ == "__main__":
-    subjet_id = "337"
-    slice_id = 30
+    subjet_id = "365"
+    slice_id = 0
     save_dir = f"/mnt/ito/diffusion-anomaly/out/binarized_img/{subjet_id}"
     os.makedirs(f"{save_dir}", exist_ok=True)
 
@@ -28,11 +29,10 @@ if __name__ == "__main__":
         vmax=255,
         vmin=0,
     )
-    plt.colorbar(heatmap)
     plt.axis("off")
     plt.show()
     plt.savefig(
-        f"{save_dir}/{slice_id}_diffmap.png",
+        f"{save_dir}/{str(slice_id+80).zfill(2)}_diffmap.png",
         bbox_inches="tight",
         pad_inches=0,
     )
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     plt.axis("off")
     plt.show()
     plt.savefig(
-        f"{save_dir}/{slice_id}_diffmap_otsubin.png",
+        f"{save_dir}/{str(slice_id+80).zfill(2)}_diffmap_otsubin.png",
         bbox_inches="tight",
         pad_inches=0,
     )
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     plt.axis("off")
     plt.show()
     plt.savefig(
-        f"{save_dir}/{slice_id}_label_bin.png",
+        f"{save_dir}/{str(slice_id+80).zfill(2)}_label_bin.png",
         bbox_inches="tight",
         pad_inches=0,
     )
