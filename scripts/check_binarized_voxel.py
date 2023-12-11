@@ -11,14 +11,15 @@ import cv2
 
 
 if __name__ == "__main__":
-    subjet_id = "365"
-    slice_id = 0
+    subjet_id = "353"
+    slice_id = 48
     save_dir = f"/mnt/ito/diffusion-anomaly/out/binarized_img/{subjet_id}"
     os.makedirs(f"{save_dir}", exist_ok=True)
 
     diff_voxel = nibabel.load(
         f"/media/user/ボリューム/out/bin_voxel_and_label/{subjet_id}/diff_voxel.nii"
     )
+    # TODO: voxelのヒストグラムを確認し、Otsuの手法を適応するかしないかを決める
     diff_voxel_tensor = diff_voxel.get_fdata()
     print(diff_voxel_tensor.shape)
     print("max: ", diff_voxel_tensor.max())

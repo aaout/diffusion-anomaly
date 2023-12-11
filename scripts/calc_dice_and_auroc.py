@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     subject_dirs = sorted(os.listdir(diffmap_dirs))
     for subject_id in subject_dirs:
-        if subject_id == "341":
+        if subject_id != "341":
             continue
         diff_all_voxel_list = []
         label_voxel_list = []
@@ -113,17 +113,17 @@ if __name__ == "__main__":
         norm_label_voxel_np = norm_label_voxel_np.astype(np.uint8)
 
         # ラベル画像と二値化された画像のDICE係数を計算
-        dice = dice_coefficient(norm_label_voxel_np, bin_diff_all)
-        dice_list.append(dice)
-        print(f"DICE: {dice}")
+        # dice = dice_coefficient(norm_label_voxel_np, bin_diff_all)
+        # dice_list.append(dice)
+        # print(f"DICE: {dice}")
 
         # AUROCの計算
-        flat_truth = norm_label_voxel_np.flatten()
-        flat_pred = norm_diff_all_np.flatten()
-        auroc = roc_auc_score(flat_truth, flat_pred)
-        auroc_list.append(auroc)
-        print(f"AUROC: {auroc}")
-        print("")
+        # flat_truth = norm_label_voxel_np.flatten()
+        # flat_pred = norm_diff_all_np.flatten()
+        # auroc = roc_auc_score(flat_truth, flat_pred)
+        # auroc_list.append(auroc)
+        # print(f"AUROC: {auroc}")
+        # print("")
 
         # ROCカーブとROCの計算
         # flat_truth = flat_truth / 255.0
@@ -137,17 +137,17 @@ if __name__ == "__main__":
         # sys.exit()
 
     # # DICEとAUROCの値をJSON形式で保存
-    dice_and_auroc_json = {}
-    dice_avg = np.mean(dice_list)
-    auroc_avg = np.mean(auroc_list)
-    print(f"DICE average: {dice_avg}")
-    print(f"AUROC average: {auroc_avg}")
-    dice_and_auroc_json["average"] = {"dice": dice_avg, "auroc": auroc_avg}
-    for fname, dice, auroc in zip(filename_list, dice_list, auroc_list):
-        dice_and_auroc_json[fname] = {
-            "dice": dice,
-            "auroc": auroc,
-        }
+    # dice_and_auroc_json = {}
+    # dice_avg = np.mean(dice_list)
+    # auroc_avg = np.mean(auroc_list)
+    # print(f"DICE average: {dice_avg}")
+    # print(f"AUROC average: {auroc_avg}")
+    # dice_and_auroc_json["average"] = {"dice": dice_avg, "auroc": auroc_avg}
+    # for fname, dice, auroc in zip(filename_list, dice_list, auroc_list):
+    #     dice_and_auroc_json[fname] = {
+    #         "dice": dice,
+    #         "auroc": auroc,
+    #     }
 
-    with open("/mnt/ito/diffusion-anomaly/out/dice_and_auroc.json", "w") as f:
-        json.dump(dice_and_auroc_json, f, indent=4)
+    # with open("/mnt/ito/diffusion-anomaly/out/dice_and_auroc.json", "w") as f:
+    #     json.dump(dice_and_auroc_json, f, indent=4)
