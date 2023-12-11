@@ -124,7 +124,7 @@ if __name__ == "__main__":
     # sam_checkpoint = "models/sam_vit_l_0b3195.pth"
     model_type = "vit_h"
     device = "cuda"
-    num_point = 3
+    num_point = 5
 
     # SAMのロード
     print(f"Loading SAM model {sam_checkpoint}")
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     diffmap_dirs = "/media/user/ボリューム/out/bin_voxel_and_label/"
     subject_dirs = sorted(os.listdir(diffmap_dirs))
     for subject_id in subject_dirs:
-        # TODO: 推論結果が真っ黒の場合、スコア計算から除外
+        print("=====================================")
         print(f"ID: {subject_id}")
         filename_list.append(subject_id)
         os.makedirs(f"{save_dir}/{subject_id}", exist_ok=True)
@@ -179,9 +179,8 @@ if __name__ == "__main__":
         )
         norm_label_voxel_np = norm_label_voxel_np.astype(np.uint8)
 
+        dice_list = []
         for slice_id in range(norm_diff_voxel_np.shape[0]):
-            # TODO: スライスごとのIoUを計算
-            dice_list = []
             print("slice_id: ", slice_id + 80)
             diff_slice_np = norm_diff_voxel_np[slice_id, :, :]
             diff_slice_np = cv2.cvtColor(diff_slice_np, cv2.COLOR_BGR2RGB)
@@ -203,9 +202,19 @@ if __name__ == "__main__":
                 point_labels=input_labels,
                 multimask_output=False,
             )
+            pred_mask = masks[0].astype(np.uint8)
+            norm_pred_mask = cv2.normalize(
+                pred_mask,
+                None,
+                alpha=0,
+                beta=255,
+                norm_type=cv2.NORM_MINMAX,
+            )
 
             # DICE係数計算
-            dice_list.append(dice_coefficient(masks[0], label_slice_np_original))
+            dice = dice_coefficient(label_slice_np_original, norm_pred_mask)
+            dice_list.append(dice)
+            print(dice)
 
             # セグメンテーション結果の保存
             save_figure(
@@ -227,15 +236,17 @@ if __name__ == "__main__":
                 f"{save_dir}/{subject_id}/{slice_id + 80}_pred_slice.jpg",
             )
 
-        dice_list = np.array(dice_list)
-        dice_mean_list.append(np.mean(dice_list))
-        dice_var_list.append(np.var(dice_list))
-        print(np.mean(dice_list))
-        print(np.var(dice_list))
-        sys.exit()
+        dice_list_np = np.array(dice_list)
+        dice_mean_list.append(np.mean(dice_list_np))
+        dice_var_list.append(np.var(dice_list_np))
+        print(np.mean(dice_list_np))
+        print(np.var(dice_list_np))
+
+    dice_mean_list_np = np.array(dice_mean_list)
+    print("mean DICE: ", np.mean(dice_mean_list_np))
 
     segment_diffmap_json = {}
     for fname, dice_mean, dice_var in zip(filename_list, dice_mean_list, dice_var_list):
         segment_diffmap_json[fname] = {"dice_mean": dice_mean, "dice_var": dice_var}
-    with open("/mnt/ito/diffusion-anomaly/out/segment_diffmap_json.json", "w") as f:
+    with open("/mnt/ito/diffusion-anomaly/out/segment_diffmap.json", "w") as f:
         json.dump(segment_diffmap_json, f, indent=4)
