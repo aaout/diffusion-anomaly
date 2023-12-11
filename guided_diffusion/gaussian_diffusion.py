@@ -901,7 +901,7 @@ class GaussianDiffusion:
         indices = list(range(t))[::-1]
         noise = th.randn_like(img).to(device)
         x_noisy = self.q_sample(x_start=img, t=t, noise=noise).to(device)
-        print("xnoisy", x_noisy.shape)
+        # print("xnoisy", x_noisy.shape)
 
         final = None
         for sample in self.ddim_sample_loop_progressive(

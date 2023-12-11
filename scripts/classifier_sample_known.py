@@ -32,7 +32,8 @@ from guided_diffusion.script_util import (
 # 0: 異常データのみ入力
 # 1: 正常データのみ入力
 SAMPLE_MODE = 1
-FOLDER_NAME = "sample_data_and_heatmap"
+FOLDER_NAME = "sample_data_and_heatmap_000-154"
+# FOLDER_NAME = "sample_data_and_heatmap"
 
 
 def norm_func(slice_data):
@@ -110,7 +111,7 @@ def main():
         # img[4] (file_name): file name tuple: ('BraTS20_Training_349_t1_099.nii.gz',)
         print("")
         print(img[4][0])
-        print("weakly label: ", img[1])
+        # print("weakly label: ", img[1])
 
         # 入力ファイルに対応するclip点をjsonファイルから獲得
         file_name = img[4][0]
@@ -164,7 +165,7 @@ def main():
         sample_fn = (
             diffusion.p_sample_loop_known
             if not args.use_ddim
-            else diffusion.ddim_sample_loop_known
+            else diffusion.ddim_sample_loop_known  # default
         )
         start = th.cuda.Event(enable_timing=True)
         end = th.cuda.Event(enable_timing=True)

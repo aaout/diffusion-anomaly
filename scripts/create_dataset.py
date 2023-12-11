@@ -46,6 +46,7 @@ def norm_func(voxel_data):
     return normalized_data
 
 
+# TODO: maxで割るのではなく、4で割る
 def norm_seg_func(seg_slice_data):
     max_value = np.max(seg_slice_data)
     min_value = np.min(seg_slice_data)
@@ -59,7 +60,9 @@ def norm_seg_func(seg_slice_data):
 
 
 if __name__ == "__main__":
-    FLAG = "train"  # train or test
+    FLAG = "test"  # train or test
+    save_dir = "/media/user/ボリューム/brats_imgs_000-154/"  # 全スライスを利用する場合
+    # save_dir = "/media/user/ボリューム/brats_imgs_080-128/"  # 首側の80枚と頭頂側の26枚を削除する場合
     if FLAG == "train":
         DATA_DIR = "/mnt/ito/diffusion-anomaly/data/archive/BraTS2020_TrainingData"
     elif FLAG == "test":
@@ -85,18 +88,21 @@ if __name__ == "__main__":
                         nib_voxel = nibabel.load(data_path)
                         np_voxel = nib_voxel.get_fdata()
                         for slice_i in range(np_voxel.shape[2]):
-                            # 首側の80枚と頭頂側の26枚は使用しない
-                            if slice_i < 80 or slice_i >= 129:
-                                continue
+                            # brats_imgs_000-154: 全てのスライスを使用
+                            # brats_imgs_080-128: 首側の80枚と頭頂側の26枚を削除
+                            # if slice_i < 80 or slice_i >= 129:
+                            #     continue
                             np_slice = np_voxel[:, :, slice_i]
                             np_norm_slice = norm_seg_func(np_slice)
                             # スライスデータの左右反転と90度回転
                             flipped_image_data = np.fliplr(np_norm_slice)
                             rotated_image_data = np.rot90(flipped_image_data, k=1)
+
+                            # labelデータ保存
                             # testデータのlabelsだけ別のディレクトリに保存
                             if FLAG == "test":
                                 os.makedirs(
-                                    f"/media/user/ボリューム2/brats_imgs/test_labels/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/",
+                                    f"{save_dir}/test_labels/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/",
                                     exist_ok=True,
                                 )
                                 nib_slice = nibabel.Nifti1Image(
@@ -104,11 +110,11 @@ if __name__ == "__main__":
                                 )
                                 nibabel.save(
                                     nib_slice,
-                                    f"/media/user/ボリューム2/brats_imgs/test_labels/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}.nii.gz",
+                                    f"{save_dir}/test_labels/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}.nii.gz",
                                 )
-                            else:
+                            else:  # trainのlabelデータ保存
                                 os.makedirs(
-                                    f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/",
+                                    f"{save_dir}/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/",
                                     exist_ok=True,
                                 )
                                 nib_slice = nibabel.Nifti1Image(
@@ -116,10 +122,9 @@ if __name__ == "__main__":
                                 )
                                 nibabel.save(
                                     nib_slice,
-                                    f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}.nii.gz",
+                                    f"{save_dir}/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}.nii.gz",
                                 )
-                    else:
-                        # seg.nii以外はnorm_funcを適用して正規化
+                    else:  # norm_funcを適用して正規化した後, 4チャネルの入力データを保存
                         data_path = os.path.join(root, f)
                         nib_voxel = nibabel.load(data_path)
                         np_voxel = nib_voxel.get_fdata()
@@ -130,15 +135,15 @@ if __name__ == "__main__":
                             print("\n")
                             for slice_i in pbar2:
                                 # 首側の80枚と頭頂側の26枚は使用しない
-                                if slice_i < 80 or slice_i >= 129:
-                                    continue
+                                # if slice_i < 80 or slice_i >= 129:
+                                #     continue
                                 np_norm_slice = np_norm_voxel[:, :, slice_i]
                                 # スライスデータの左右反転と90度回転
                                 flipped_image_data = np.fliplr(np_norm_slice)
                                 rotated_image_data = np.rot90(flipped_image_data, k=1)
 
                                 os.makedirs(
-                                    f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/",
+                                    f"{save_dir}/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/",
                                     exist_ok=True,
                                 )
                                 nib_slice = nibabel.Nifti1Image(
@@ -146,5 +151,5 @@ if __name__ == "__main__":
                                 )
                                 nibabel.save(
                                     nib_slice,
-                                    f"/media/user/ボリューム2/brats_imgs/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}.nii.gz",
+                                    f"{save_dir}/{FLAG}/{f.split('.')[0][0:20]}/slice_{str(slice_i).zfill(3)}/{f.split('.')[0][0:20]}_{f.split('.')[0].split('_')[-1]}_{str(slice_i).zfill(3)}.nii.gz",
                                 )
