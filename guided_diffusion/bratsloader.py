@@ -86,7 +86,7 @@ class BRATSDataset(torch.utils.data.Dataset):
         else:
             image = torch.zeros(4, 256, 256)
             image[:, 8:-8, 8:-8] = out[:-1, ...]  # pad to a size of (256,256)
-            label = out[-1, ...][None, ...]
+            label = out[-1, ...]
             if label.max() > 0:
                 weak_label = 1
             else:

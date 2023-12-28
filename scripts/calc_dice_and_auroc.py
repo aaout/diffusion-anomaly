@@ -31,8 +31,10 @@ if __name__ == "__main__":
     auroc_list = []
     filename_list = []
     thresh_value_list = []
-    diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap/"
-    save_dir = "/media/user/ボリューム/out/bin_voxel_and_label/"
+    diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap"
+    save_dir = "/media/user/ボリューム/out/bin_voxel_and_label"
+    # diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap_000-154"
+    # save_dir = "/media/user/ボリューム/out/diffmap_and_bin_voxel_000-154"
 
     subject_dirs = sorted(os.listdir(diffmap_dirs))
     for subject_id in subject_dirs:
@@ -81,43 +83,45 @@ if __name__ == "__main__":
             norm_type=cv2.NORM_MINMAX,
         )
 
-        # ヒートマップをNIfTI形式で保存
-        os.makedirs(f"{save_dir}/{subject_id}", exist_ok=True)
-        norm_diff_all_nii = nib.Nifti1Image(norm_diff_all_np, affine=np.eye(4))
-        norm_diff_all_nii.to_filename(f"{save_dir}/{subject_id}/diff_voxel.nii")
-        norm_diff_all_np = norm_diff_all_np.astype(np.uint8)
+        # # TODO: ヒートマップ出力を別ファイルに分割
+        # # ヒートマップをNIfTI形式で保存
+        # os.makedirs(f"{save_dir}/{subject_id}", exist_ok=True)
+        # norm_diff_all_nii = nib.Nifti1Image(norm_diff_all_np, affine=np.eye(4))
+        # norm_diff_all_nii.to_filename(f"{save_dir}/{subject_id}/diff_voxel.nii")
+        # norm_diff_all_np = norm_diff_all_np.astype(np.uint8)
 
-        # Otsu thresholdingにより二値化
+        # # Otsu thresholdingにより二値化
         diff_all_thresh = threshold_otsu(norm_diff_all_np)
-        _, bin_diff_all = cv2.threshold(
+        thres, bin_diff_all = cv2.threshold(
             norm_diff_all_np, diff_all_thresh, 255, cv2.THRESH_BINARY
         )
+        print(f"Otsu threshold: {thres/256}")
 
-        # 二値化したヒートマップをNIfTI形式で保存
-        bin_diff_all_nii = nib.Nifti1Image(bin_diff_all, affine=np.eye(4))
-        bin_diff_all_nii.to_filename(f"{save_dir}/{subject_id}/otsubin_diff_voxel.nii")
-        thresh_value_list.append(diff_all_thresh.astype(np.int64))
+        # # 二値化したヒートマップをNIfTI形式で保存
+        # bin_diff_all_nii = nib.Nifti1Image(bin_diff_all, affine=np.eye(4))
+        # bin_diff_all_nii.to_filename(f"{save_dir}/{subject_id}/otsubin_diff_voxel.nii")
+        # thresh_value_list.append(diff_all_thresh.astype(np.int64))
 
-        label_voxel = torch.stack(label_voxel_list, dim=0)
-        label_voxel_np = label_voxel.cpu().numpy()
-        norm_label_voxel_np = cv2.normalize(
-            label_voxel_np,
-            None,
-            alpha=0,
-            beta=255,
-            norm_type=cv2.NORM_MINMAX,
-        )
-        # 二値化したラベルデータをNIfTI形式で保存
-        norm_label_voxel_nii = nib.Nifti1Image(norm_label_voxel_np, affine=np.eye(4))
-        norm_label_voxel_nii.to_filename(f"{save_dir}/{subject_id}/bin_label_voxel.nii")
-        norm_label_voxel_np = norm_label_voxel_np.astype(np.uint8)
+        # label_voxel = torch.stack(label_voxel_list, dim=0)
+        # label_voxel_np = label_voxel.cpu().numpy()
+        # norm_label_voxel_np = cv2.normalize(
+        #     label_voxel_np,
+        #     None,
+        #     alpha=0,
+        #     beta=255,
+        #     norm_type=cv2.NORM_MINMAX,
+        # )
+        # # 二値化したラベルデータをNIfTI形式で保存
+        # norm_label_voxel_nii = nib.Nifti1Image(norm_label_voxel_np, affine=np.eye(4))
+        # norm_label_voxel_nii.to_filename(f"{save_dir}/{subject_id}/bin_label_voxel.nii")
+        # norm_label_voxel_np = norm_label_voxel_np.astype(np.uint8)
 
-        # ラベル画像と二値化された画像のDICE係数を計算
+        # # ラベル画像と二値化された画像のDICE係数を計算
         # dice = dice_coefficient(norm_label_voxel_np, bin_diff_all)
         # dice_list.append(dice)
         # print(f"DICE: {dice}")
 
-        # AUROCの計算
+        # # AUROCの計算
         # flat_truth = norm_label_voxel_np.flatten()
         # flat_pred = norm_diff_all_np.flatten()
         # auroc = roc_auc_score(flat_truth, flat_pred)

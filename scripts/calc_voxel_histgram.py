@@ -12,9 +12,9 @@ import nibabel
 
 if __name__ == "__main__":
     filename_list = []
-    SUBJETC_ID = "362"
-    diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap/"
-    save_dir = "/media/user/ボリューム/out/bin_voxel_and_label/"
+    SUBJETC_ID = "341"
+    diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap_000-154/"
+    save_dir = "/mnt/ito/diffusion-anomaly/out/diffmap_histgram_000-154/"
 
     subject_dirs = sorted(os.listdir(diffmap_dirs))
     for subject_id in subject_dirs:
@@ -37,15 +37,28 @@ if __name__ == "__main__":
             diff_all_voxel_np = diff_all_voxel.cpu().numpy()
 
             # ピクセル値のヒストグラムを表示
+            os.makedirs(save_dir, exist_ok=True)
             plt.figure(figsize=(8, 6))
             plt.hist(
                 diff_all_voxel_np.ravel(), bins=100, color="b", alpha=0.7, rwidth=0.8
             )
             plt.grid(axis="y", linestyle="--", alpha=0.7)
             plt.tight_layout()
-            plt.ylim(0, 5000)
             plt.show()
-            plt.savefig(f"diff_all_voxel_hist_{SUBJETC_ID}.jpg")
+            plt.savefig(f"{save_dir}diff_all_voxel_hist_{SUBJETC_ID}.jpg")
+            plt.close()
+
+            plt.figure(figsize=(8, 6))
+            plt.hist(
+                diff_all_voxel_np.ravel(), bins=100, color="b", alpha=0.7, rwidth=0.8
+            )
+            plt.grid(axis="y", linestyle="--", alpha=0.7)
+            # plt.xlim(-0.05, 2)
+            plt.ylim(0, 5000)
+            plt.tight_layout()
+            plt.show()
+            plt.savefig(f"{save_dir}diff_all_voxel_hist_{SUBJETC_ID}_ylim.jpg")
+            plt.close()
             sys.exit()
     # os.makedirs("/mnt/ito/diffusion-anomaly/out/hist/", exist_ok=True)
     # plt.savefig(
