@@ -32,7 +32,7 @@ from guided_diffusion.script_util import (
 # 0: 異常データのみ入力
 # 1: 正常データのみ入力
 SAMPLE_MODE = 1
-FOLDER_NAME = "sample_data_and_heatmap_000-154_train"
+FOLDER_NAME = "nonclassifier_sample_data_and_heatmap_080-128"
 # FOLDER_NAME = "sample_data_and_heatmap"
 
 
@@ -58,8 +58,8 @@ def main():
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
     if args.dataset == "brats":
-        ds = BRATSDataset(args.data_dir, test_flag=False)
-        # ds = BRATSDataset(args.data_dir, test_flag=True)
+        # ds = BRATSDataset(args.data_dir, test_flag=False)
+        ds = BRATSDataset(args.data_dir, test_flag=True)
         datal = th.utils.data.DataLoader(ds, batch_size=args.batch_size, shuffle=False)
 
     model.load_state_dict(
