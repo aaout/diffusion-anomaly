@@ -32,8 +32,9 @@ from guided_diffusion.script_util import (
 # 0: 異常データのみ入力
 # 1: 正常データのみ入力
 SAMPLE_MODE = 1
-FOLDER_NAME = "nonclassifier_sample_data_and_heatmap_080-128"
+# FOLDER_NAME = "nonclassifier_sample_data_and_heatmap_080-128_ddim"
 # FOLDER_NAME = "sample_data_and_heatmap"
+FOLDER_NAME = "sample_data_and_heatmap_080-154_train_normal"
 
 
 def norm_func(slice_data):
@@ -58,8 +59,8 @@ def main():
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
     if args.dataset == "brats":
-        # ds = BRATSDataset(args.data_dir, test_flag=False)
-        ds = BRATSDataset(args.data_dir, test_flag=True)
+        ds = BRATSDataset(args.data_dir, test_flag=False)
+        # ds = BRATSDataset(args.data_dir, test_flag=True)
         datal = th.utils.data.DataLoader(ds, batch_size=args.batch_size, shuffle=False)
 
     model.load_state_dict(
@@ -151,9 +152,31 @@ def main():
         # if subject_number in [f"{i:03}" for i in range(334, 350)]:
         #     print(f"skip {subject_number}")
         #     continue
-        # if subject_number == "353":
-        #     print(f"skip {subject_number}")
-        #     continue
+        if subject_number not in [
+            "008",
+            "028",
+            "048",
+            "086",
+            "099",
+            "108",
+            "158",
+            "169",
+            "177",
+            "195",
+            "204",
+            "209",
+            "217",
+            "242",
+            "249",
+            "268",
+            "275",
+            "288",
+            "304",
+            "325",
+            "331",
+        ]:
+            print(f"skip {subject_number}")
+            continue
 
         # 正常(0) or 異常データ(1)のみに対してサンプリング
         # if normal_or_abnormal == SAMPLE_MODE:

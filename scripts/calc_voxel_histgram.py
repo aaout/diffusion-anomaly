@@ -12,9 +12,9 @@ import nibabel
 
 if __name__ == "__main__":
     filename_list = []
-    SUBJETC_ID = "341"
-    diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap_000-154/"
-    save_dir = "/mnt/ito/diffusion-anomaly/out/diffmap_histgram_000-154/"
+    SUBJETC_ID = "008"
+    diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap_080-154_train_normal/"
+    save_dir = "/mnt/ito/diffusion-anomaly/out/diffmap_histgram_080-154_train_normal/"
 
     subject_dirs = sorted(os.listdir(diffmap_dirs))
     for subject_id in subject_dirs:
@@ -35,12 +35,24 @@ if __name__ == "__main__":
                 diff_all_voxel_list.append(diff_all_pt_data)
             diff_all_voxel = torch.stack(diff_all_voxel_list, dim=0)
             diff_all_voxel_np = diff_all_voxel.cpu().numpy()
+            norm_diff_all_voxel_np = cv2.normalize(
+                diff_all_voxel_np,
+                None,
+                alpha=0,
+                beta=255,
+                norm_type=cv2.NORM_MINMAX,
+            )
+            norm_diff_all_voxel_np = norm_diff_all_voxel_np.astype(np.uint8)
 
             # ピクセル値のヒストグラムを表示
             os.makedirs(save_dir, exist_ok=True)
             plt.figure(figsize=(8, 6))
             plt.hist(
-                diff_all_voxel_np.ravel(), bins=100, color="b", alpha=0.7, rwidth=0.8
+                norm_diff_all_voxel_np.ravel(),
+                bins=256,
+                color="b",
+                alpha=0.7,
+                rwidth=0.8,
             )
             plt.grid(axis="y", linestyle="--", alpha=0.7)
             plt.tight_layout()
@@ -50,11 +62,15 @@ if __name__ == "__main__":
 
             plt.figure(figsize=(8, 6))
             plt.hist(
-                diff_all_voxel_np.ravel(), bins=100, color="b", alpha=0.7, rwidth=0.8
+                norm_diff_all_voxel_np.ravel(),
+                bins=256,
+                color="b",
+                alpha=0.7,
+                rwidth=0.8,
             )
             plt.grid(axis="y", linestyle="--", alpha=0.7)
             # plt.xlim(-0.05, 2)
-            plt.ylim(0, 5000)
+            plt.ylim(0, 1000)
             plt.tight_layout()
             plt.show()
             plt.savefig(f"{save_dir}diff_all_voxel_hist_{SUBJETC_ID}_ylim.jpg")
