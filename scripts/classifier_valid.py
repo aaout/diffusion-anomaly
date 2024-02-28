@@ -23,24 +23,6 @@ from visdom import Visdom
 import numpy as np
 from sklearn.metrics import confusion_matrix
 
-# "visdom -port 8850" to start visdom server
-viz = Visdom(port=8850)
-loss_window = viz.line(
-    Y=th.zeros((1)).cpu(),
-    X=th.zeros((1)).cpu(),
-    opts=dict(xlabel="epoch", ylabel="Loss", title="classification loss"),
-)
-val_window = viz.line(
-    Y=th.zeros((1)).cpu(),
-    X=th.zeros((1)).cpu(),
-    opts=dict(xlabel="epoch", ylabel="Loss", title="validation loss"),
-)
-acc_window = viz.line(
-    Y=th.zeros((1)).cpu(),
-    X=th.zeros((1)).cpu(),
-    opts=dict(xlabel="epoch", ylabel="acc", title="accuracy"),
-)
-
 from guided_diffusion import dist_util, logger
 from guided_diffusion.fp16_util import MixedPrecisionTrainer
 from guided_diffusion.image_datasets import load_data
@@ -65,7 +47,7 @@ def main():
     model, diffusion = create_classifier_and_diffusion(
         **args_to_dict(args, classifier_and_diffusion_defaults().keys()),
     )
-    # model.load_state_dict(dist_util.load_state_dict(args.classifier_path))
+    model.load_state_dict(dist_util.load_state_dict(args.classifier_path))
     model.to(dist_util.dev())
     if args.noised:
         schedule_sampler = create_named_schedule_sampler(
@@ -126,7 +108,7 @@ def main():
             dist_util.load_state_dict(opt_checkpoint, map_location=dist_util.dev())
         )
 
-    logger.log("training classifier model...")
+    logger.log("Validate classifier model...")
 
     def forward_backward_log(data_loader, step, prefix="train"):
         if args.dataset == "brats":

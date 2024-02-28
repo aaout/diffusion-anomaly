@@ -23,22 +23,22 @@ from visdom import Visdom
 import numpy as np
 
 # "visdom -port 8850" to start visdom server
-viz = Visdom(port=8850)
-loss_window = viz.line(
-    Y=th.zeros((1)).cpu(),
-    X=th.zeros((1)).cpu(),
-    opts=dict(xlabel="epoch", ylabel="Loss", title="classification loss"),
-)
-val_window = viz.line(
-    Y=th.zeros((1)).cpu(),
-    X=th.zeros((1)).cpu(),
-    opts=dict(xlabel="epoch", ylabel="Loss", title="validation loss"),
-)
-acc_window = viz.line(
-    Y=th.zeros((1)).cpu(),
-    X=th.zeros((1)).cpu(),
-    opts=dict(xlabel="epoch", ylabel="acc", title="accuracy"),
-)
+# viz = Visdom(port=8850)
+# loss_window = viz.line(
+#     Y=th.zeros((1)).cpu(),
+#     X=th.zeros((1)).cpu(),
+#     opts=dict(xlabel="epoch", ylabel="Loss", title="classification loss"),
+# )
+# val_window = viz.line(
+#     Y=th.zeros((1)).cpu(),
+#     X=th.zeros((1)).cpu(),
+#     opts=dict(xlabel="epoch", ylabel="Loss", title="validation loss"),
+# )
+# acc_window = viz.line(
+#     Y=th.zeros((1)).cpu(),
+#     X=th.zeros((1)).cpu(),
+#     opts=dict(xlabel="epoch", ylabel="acc", title="accuracy"),
+# )
 
 from guided_diffusion import dist_util, logger
 from guided_diffusion.fp16_util import MixedPrecisionTrainer
@@ -157,14 +157,14 @@ def main():
             log_loss_dict(diffusion, sub_t, losses)
 
             loss = loss.mean()
-            if prefix == "train":
-                viz.line(
-                    X=th.ones((1, 1)).cpu() * step,
-                    Y=th.Tensor([loss]).unsqueeze(0).cpu(),
-                    win=loss_window,
-                    name="loss_cls",
-                    update="append",
-                )
+            # if prefix == "train":
+            #     viz.line(
+            #         X=th.ones((1, 1)).cpu() * step,
+            #         Y=th.Tensor([loss]).unsqueeze(0).cpu(),
+            #         win=loss_window,
+            #         name="loss_cls",
+            #         update="append",
+            #     )
 
             # else:
             #     output_idx = logits[0].argmax()

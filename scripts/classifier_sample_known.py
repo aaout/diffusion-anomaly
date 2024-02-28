@@ -34,7 +34,7 @@ from guided_diffusion.script_util import (
 SAMPLE_MODE = 1
 # FOLDER_NAME = "nonclassifier_sample_data_and_heatmap_080-128_ddim"
 # FOLDER_NAME = "sample_data_and_heatmap"
-FOLDER_NAME = "sample_data_and_heatmap_080-154_train_normal"
+FOLDER_NAME = "sample_data_and_heatmap_080-154_train_abnormal"
 
 
 def norm_func(slice_data):
@@ -152,7 +152,7 @@ def main():
         # if subject_number in [f"{i:03}" for i in range(334, 350)]:
         #     print(f"skip {subject_number}")
         #     continue
-        if subject_number not in [
+        if subject_number in [
             "008",
             "028",
             "048",

@@ -63,16 +63,17 @@ def calculate_specificity(y_true, y_pred):
 
 
 if __name__ == "__main__":
+    diffmap_dirs = (
+        "/media/user/ボリューム/out/sample_data_and_heatmap_080-154_train_abnormal"
+    )
+    save_dir = "/media/user/ボリューム/out/bin_voxel_and_label_080-154_train_abnormal_post_processing"
+
     dice_list = []
     sensitivity_list = []
     specificity_list = []
     auroc_list = []
     filename_list = []
     thresh_value_list = []
-    # diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap_080-154_train_normal"
-    # save_dir = "/media/user/ボリューム/out/bin_voxel_and_label_080-154_train_normal"
-    diffmap_dirs = "/media/user/ボリューム/out/sample_data_and_heatmap"
-    save_dir = "/media/user/ボリューム/out/bin_voxel_and_label"
 
     subject_dirs = sorted(os.listdir(diffmap_dirs))
     for subject_id in subject_dirs:
@@ -80,6 +81,10 @@ if __name__ == "__main__":
             continue
         diff_all_voxel_list = []
         label_voxel_list = []
+        diff_t1_voxel_list = []
+        diff_t1ce_voxel_list = []
+        diff_t2_voxel_list = []
+        diff_flair_voxel_list = []
         subject_path = os.path.join(diffmap_dirs, subject_id)
         slice_list = sorted(os.listdir(subject_path))
         print(f"ID: {subject_id}")
@@ -87,20 +92,14 @@ if __name__ == "__main__":
         for slice_id in slice_list:
             slice_path = os.path.join(subject_path, slice_id)
             target_file_list = sorted(os.listdir(slice_path))
-            # 4チャネル差分合計のファイル名を取得してnumpy形式に変換
-            diff_all_pt = [f for f in target_file_list if f.endswith("diff_all.pt")]
-            diff_all_pt_path = os.path.join(slice_path, diff_all_pt[0])
-            diff_all_pt_data = torch.load(diff_all_pt_path)
-            diff_all_voxel_list.append(diff_all_pt_data)
 
-            # ラベルデータのファイル名を取得してnumpy形式に変換
             label_pt = [f for f in target_file_list if f.endswith("label.pt")]
             label_pt_path = os.path.join(slice_path, label_pt[0])
             label_pt_data = torch.load(label_pt_path)
-            # background = torch.zeros(256, 256)
-            # background[8:-8, 8:-8] = label_pt_data
-            # label_np_data = background.cpu().numpy()
             label_np_data = label_pt_data.cpu().numpy()
+            background = torch.zeros(256, 256)
+            background[8:-8, 8:-8] = label_pt_data
+            label_np_data = background.cpu().numpy()
             norm_label_np = cv2.normalize(
                 label_np_data,
                 None,
@@ -114,6 +113,103 @@ if __name__ == "__main__":
             )
             label_voxel_list.append(torch.tensor(bin_norm_label))
 
+            # t1の入出力差分は正の値を0にし, 負の値の絶対値をとる
+            diff_t1_pt = [f for f in target_file_list if f.endswith("diff_t1.pt")]
+            diff_t1_pt_path = os.path.join(slice_path, diff_t1_pt[0])
+            diff_t1_pt_data = torch.load(diff_t1_pt_path)
+            diff_t1_pt_clip = torch.clamp(diff_t1_pt_data, None, 0)
+            diff_t1_pt_clip = torch.abs(diff_t1_pt_clip)
+            # t1_np = diff_t1_pt_clip.cpu().numpy()
+            # heatmap = plt.imshow(
+            #     t1_np,
+            #     cmap="bwr",
+            #     interpolation="nearest",
+            #     vmax=1,
+            #     vmin=-1,
+            # )
+            # plt.axis("off")
+            # plt.show()
+            # plt.savefig(
+            #     "diffmap_t1.jpg",
+            #     bbox_inches="tight",
+            #     pad_inches=0,
+            # )
+            # plt.close()
+
+            # t1ceの入出力差分は絶対値をとる
+            diff_t1ce_pt = [f for f in target_file_list if f.endswith("diff_t1ce.pt")]
+            diff_t1ce_pt_path = os.path.join(slice_path, diff_t1ce_pt[0])
+            diff_t1ce_pt_data = torch.load(diff_t1ce_pt_path)
+            diff_t1ce_pt_clip = torch.abs(diff_t1ce_pt_data)
+            # diff_t1ce_pt_clip = torch.clamp(diff_t1ce_pt_data, 0, None)
+            # t1ce_np = diff_t1ce_pt_clip.cpu().numpy()
+            # heatmap = plt.imshow(
+            #     t1ce_np,
+            #     cmap="bwr",
+            #     interpolation="nearest",
+            #     vmax=1,
+            #     vmin=-1,
+            # )
+            # plt.axis("off")
+            # plt.show()
+            # plt.savefig(
+            #     "diffmap_t1ce.jpg",
+            #     bbox_inches="tight",
+            #     pad_inches=0,
+            # )
+            # plt.close()
+
+            diff_t2_pt = [f for f in target_file_list if f.endswith("diff_t2.pt")]
+            diff_t2_pt_path = os.path.join(slice_path, diff_t2_pt[0])
+            diff_t2_pt_data = torch.load(diff_t2_pt_path)
+            diff_t2_pt_clip = torch.clamp(diff_t2_pt_data, 0, None)
+            # t2_np = diff_t2_pt_clip.cpu().numpy()
+            # heatmap = plt.imshow(
+            #     t2_np,
+            #     cmap="bwr",
+            #     interpolation="nearest",
+            #     vmax=1,
+            #     vmin=-1,
+            # )
+            # plt.axis("off")
+            # plt.show()
+            # plt.savefig(
+            #     "diffmap_t2.jpg",
+            #     bbox_inches="tight",
+            #     pad_inches=0,
+            # )
+            # plt.close()
+
+            diff_flair_pt = [f for f in target_file_list if f.endswith("diff_flair.pt")]
+            diff_flair_pt_path = os.path.join(slice_path, diff_flair_pt[0])
+            diff_flair_pt_data = torch.load(diff_flair_pt_path)
+            diff_flair_pt_clip = torch.clamp(diff_flair_pt_data, 0, None)
+            # flair_np = diff_flair_pt_clip.cpu().numpy()
+            # heatmap = plt.imshow(
+            #     flair_np,
+            #     cmap="bwr",
+            #     interpolation="nearest",
+            #     vmax=1,
+            #     vmin=-1,
+            # )
+            # plt.axis("off")
+            # plt.show()
+            # plt.savefig(
+            #     "diffmap_flair.jpg",
+            #     bbox_inches="tight",
+            #     pad_inches=0,
+            # )
+            # plt.close()
+            # sys.exit()
+
+            diff_all_pt_clip = (
+                diff_t1_pt_clip
+                + diff_t1ce_pt_clip
+                + diff_t2_pt_clip
+                + diff_flair_pt_clip
+            )
+            diff_all_voxel_list.append(diff_all_pt_clip)
+
         diff_all_voxel = torch.stack(diff_all_voxel_list, dim=0)
         diff_all_voxel_np = diff_all_voxel.cpu().numpy()
         norm_diff_all_np = cv2.normalize(
@@ -124,8 +220,6 @@ if __name__ == "__main__":
             norm_type=cv2.NORM_MINMAX,
         )
 
-        # TODO: ヒートマップ出力を別ファイルに分割
-        # ヒートマップをNIfTI形式で保存
         os.makedirs(f"{save_dir}/{subject_id}", exist_ok=True)
         norm_diff_all_nii = nib.Nifti1Image(norm_diff_all_np, affine=np.eye(4))
         norm_diff_all_nii.to_filename(f"{save_dir}/{subject_id}/diff_voxel.nii")
@@ -139,7 +233,7 @@ if __name__ == "__main__":
         print(f"Otsu threshold: {thres}")
         thresh_value_list.append(thres)
 
-        # 二値化したヒートマップをNIfTI形式で保存
+        # 二値化したセグメンテーション結果をNIfTI形式で保存
         bin_diff_all_nii = nib.Nifti1Image(bin_diff_all, affine=np.eye(4))
         bin_diff_all_nii.to_filename(f"{save_dir}/{subject_id}/otsubin_diff_voxel.nii")
 
@@ -176,17 +270,6 @@ if __name__ == "__main__":
         print(f"AUROC: {auroc}")
         print("")
 
-        # ROCカーブとROCの計算
-        # flat_truth = flat_truth / 255.0
-        # flat_pred = flat_pred / 255.0
-        # fpr, tpr, thresholds = roc_curve(flat_truth, flat_pred)
-        # print("fpr: ", fpr)
-        # print("tpr: ", tpr)
-        # print("thresholds: ", thresholds)
-        # roc_auc = auc(fpr, tpr)
-        # print(roc_auc)
-        # sys.exit()
-
     # DICEとAUROCの値をJSON形式で保存
     dice_and_auroc_json = {}
     dice_avg = np.mean(dice_list)
@@ -199,25 +282,7 @@ if __name__ == "__main__":
     print(f"specificity average: {specificity_avg}")
     print(f"AUROC average: {auroc_avg}")
     print(f"threshold average: {threshold_avg}")
-    # dice_and_auroc_json["average"] = {
-    #     "dice": dice_avg,
-    #     "senstivity": sensitivity_avg,
-    #     "specificity": specificity_avg,
-    #     "threshold": threshold_avg,
-    # }
-    # for fname, dice, sensi, speci, thres_value in zip(
-    #     filename_list,
-    #     dice_list,
-    #     sensitivity_list,
-    #     specificity_list,
-    #     thresh_value_list,
-    # ):
-    #     dice_and_auroc_json[fname] = {
-    #         "dice": dice,
-    #         "sensitivity": sensi,
-    #         "specificity": speci,
-    #         "threshold": thres_value,
-    #     }
+
     dice_and_auroc_json["average"] = {
         "dice": dice_avg,
         "senstivity": sensitivity_avg,
@@ -241,10 +306,5 @@ if __name__ == "__main__":
             "threshold": thres_value,
         }
 
-    with open("/mnt/ito/diffusion-anomaly/out/dice_and_auroc.json", "w") as f:
+    with open("/mnt/ito/diffusion-anomaly/out/dice_and_auroc_ReLU.json", "w") as f:
         json.dump(dice_and_auroc_json, f, indent=4)
-    # with open(
-    #     "/mnt/ito/diffusion-anomaly/out/dice_and_auroc080-128_nonclassifier.json",
-    #     "w",
-    # ) as f:
-    #     json.dump(dice_and_auroc_json, f, indent=4)

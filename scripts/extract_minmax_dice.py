@@ -1,6 +1,6 @@
 import json
 
-with open("/mnt/ito/diffusion-anomaly/out/dice_and_auroc.json", "r") as file:
+with open("/mnt/ito/diffusion-anomaly/out/dice_and_auroc_ReLU.json", "r") as file:
     data = json.load(file)
 
 # 'average' キーを除外する

@@ -51,12 +51,12 @@ class ScheduleSampler(ABC):
         """
         w = self.weights()
         p = w / np.sum(w)
-        indices_np = np.random.choice(len(p), size=(batch_size,), p=p)
+        # indices_np = np.random.choice(len(p), size=(batch_size,), p=p)
 
         # 固定のtimestepsを指定
-        # interval = len(p) // batch_size
-        # indices_np = np.arange(0, 1000, interval)
-        # indices_np = np.full(batch_size, 500)
+        interval = len(p) // batch_size
+        indices_np = np.arange(0, 1000, interval)
+        indices_np = np.full(batch_size, 0)
 
         indices = th.from_numpy(indices_np).long().to(device)
         weights_np = 1 / (len(p) * p[indices_np])
